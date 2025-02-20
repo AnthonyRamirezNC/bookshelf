@@ -6,6 +6,11 @@ from .models import Book
 from .serializers import BookSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+#templates
+def home(request):
+    return render(request, "index.html")
+
+#books
 @extend_schema(tags=["Books"])
 class BookListCreateView(APIView):
     """Handles GET (list all books) and POST (create a new book)"""
