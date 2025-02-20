@@ -25,5 +25,3 @@ class Book(models.Model):
 
     class Meta:
         db_table = "api_book"
-
-

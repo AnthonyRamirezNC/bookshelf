@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookShelf - Home</title>
+</head>
+<body>
+    <h1>Welcome to BookShelf</h1>
+    <p>Browse and manage your book collection.</p>
+
+    <h2>Book API Data</h2>
+    <div id="books-container">
+        <p>Loading books...</p>
+    </div>
+
+    <script>
+        async function fetchBooks() {
+            const response = await fetch('/books/');
+            const books = await response.json();
+            const container = document.getElementById('books-container');
+            container.innerHTML = '';
+
+            books.forEach(book => {
+                const bookElement = document.createElement('p');
+                bookElement.textContent = `${book.title} by ${book.author}`;
+                container.appendChild(bookElement);
+            });
+        }
+
+        fetchBooks();
+    </script>
+</body>
+</html>

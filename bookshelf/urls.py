@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_api.views import BookListCreateView, BookDetailView
+from main.views import *
 
 urlpatterns = [
     # Schema endpoint
@@ -27,7 +27,9 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 
     path('admin/', admin.site.urls),
-
+    
+    #templates
+    path("", home, name="home"),
 
     #Books
     path("books/", BookListCreateView.as_view(), name="book-list-create"),
