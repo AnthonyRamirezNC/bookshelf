@@ -3,12 +3,43 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Book
-from .serializers import BookSerializer
+from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework.decorators import api_view
 
 #templates
 def home(request):
     return render(request, "index.html")
+
+#external api views
+
+#get book data by genre
+@extend_schema(
+    tags=["External API"],
+    request = ExtGenreSerializer, #request serializer to show in docs
+    responses= {
+            200: OpenApiResponse(description="external Book retrieval by genre successful"),
+            400: OpenApiResponse(description="Bad Request"),
+        }
+    )
+@api_view(["GET"])
+def ExtGetBooksByGenre(request):
+    return Response({"message": "Ext Call Successful"}, status=status.HTTP_200_OK)
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+#database views
 
 #books
 @extend_schema(tags=["Books"])
