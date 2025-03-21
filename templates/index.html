@@ -9,6 +9,19 @@
     <h1>Welcome to BookShelf</h1>
     <p>Browse and manage your book collection.</p>
 
+    <!-- Login/Logout Button -->
+    <div>
+        {% if user.is_authenticated %}
+            <p>Hello, {{ user.username }}!</p>
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <p>You are not logged in. <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a></p>
+        {% endif %}
+
+
     <h2>Book API Data</h2>
     <div id="books-container">
         <p>Loading books...</p>

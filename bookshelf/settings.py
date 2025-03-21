@@ -199,3 +199,7 @@ try:
     print("✅ Database connection successful!")
 except Exception as e:
     print(f"❌ Database connection failed: {e}")
+
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
