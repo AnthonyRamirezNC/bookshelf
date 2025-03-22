@@ -37,6 +37,6 @@ urlpatterns = [
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
 
     #external books apis
-    path("ext/books/top-rated/", ExtGetBooksByGenre, name="ext-book-by-genre")
+    path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title")
 
 ]

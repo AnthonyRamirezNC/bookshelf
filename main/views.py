@@ -6,6 +6,8 @@ from .models import Book
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import api_view
+import requests
+import os
 
 #templates
 def home(request):
@@ -23,8 +25,34 @@ def home(request):
         }
     )
 @api_view(["GET"])
-def ExtGetBooksByGenre(request):
-    return Response({"message": "Ext Call Successful"}, status=status.HTTP_200_OK)
+def ExtGetBooksByTitle(request, title):
+    url = f'https://www.googleapis.com/books/v1/volumes?q={title}&maxResults=3&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]["books_returned"]
+
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+        book_serialized = BookSerializer(
+            title =  book_info["title"],
+            authors =  book_info["authors"],
+            
+            publication_date =  book_info["publishedDate"],
+            publisher =  book_info["publisher"],
+
+            genre =  book_info[], # need to fix this
+            
+            language =  book_info["language"],
+            page_count =  book_info["pageCount"],
+        )
+    print(ext_response_data)
+    return Response({
+        'message': f'Ext Call for title: {title} Successful',
+        'num_books_returned' : len(book_data_list),
+        'books_returned' : book_data_list,
+        }, status=status.HTTP_200_OK)
 
     
 
