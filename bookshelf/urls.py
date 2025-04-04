@@ -15,8 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from django.contrib.auth import views as auth_views
 from main.views import *
 from main.views import book_detail
 
@@ -37,6 +38,10 @@ urlpatterns = [
 
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
 
+    # Used for login testing, remove when needed
+    # path("login/", login_view, name="login"),
+    # path("register/", register, name="register"),
+    # path("logout/", auth_views.LogoutView.as_view(), name="logout")
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),

@@ -200,3 +200,7 @@ try:
 except Exception as e:
     if not TESTING:
         print(f"❌ Database connection failed: {e}")
+
+# Redirect settings for login/logout (from User-Authentication)
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

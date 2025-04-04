@@ -1,10 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Book
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.models import User
+from .forms import CustomUserCreationForm
+from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import api_view
 import requests
 import os
@@ -65,6 +69,32 @@ def ExtGetBooksByTitle(request, title):
         }, status=status.HTTP_200_OK)
 
 #database views
+
+
+def login_view(request):
+    if request.method == "POST":
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect("/")
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, "login.html", {"form": form})
+
+def register(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("/")
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, "register.html", {"form": form})
+
 
 
 #books
