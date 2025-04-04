@@ -37,8 +37,8 @@ urlpatterns = [
 
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
 
-    #Login
-    path("login/", login_view, name="login"),
-    path("register/", register, name="register"),
-     path("logout/", auth_views.LogoutView.as_view(), name="logout")
+    # #Login
+    # path("login/", login_view, name="login"),
+    # path("register/", register, name="register"),
+    # path("logout/", auth_views.LogoutView.as_view(), name="logout")
 ]
