@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from main.views import *
+from main.views import book_detail
 
 urlpatterns = [
     # Schema endpoint
@@ -36,4 +37,5 @@ urlpatterns = [
 
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
 
+    path("book/<str:book_id>/", book_detail, name="book-detail"),
 ]
