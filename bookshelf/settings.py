@@ -117,7 +117,7 @@ if TESTING or "test" in sys.argv:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",  # Use in-memory SQLite database for faster tests
+            "NAME": BASE_DIR,
         }
     }
 else:
@@ -186,7 +186,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
@@ -198,8 +198,9 @@ try:
     connection.ensure_connection()
     print("✅ Database connection successful!")
 except Exception as e:
-    print(f"❌ Database connection failed: {e}")
+    if not TESTING:
+        print(f"❌ Database connection failed: {e}")
 
-
+# Redirect settings for login/logout (from User-Authentication)
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"

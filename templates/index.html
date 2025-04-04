@@ -3,45 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookShelf - Home</title>
+    <title>Bookshelf - Homepage</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bulma.min.css' %}">
+    <style>
+        body {
+            background-color: #F9F3F0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #F9F3F0;
+            border-bottom: 2px solid #CE796B;
+            padding: 20px;
+            text-align: center;
+        }
+        header img {
+            height: 175px;
+        }
+        .book-section {
+            margin: 20px;
+            padding: 20px;
+        }
+        .book-section h2 {
+            color: #717744;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .book-card {
+            background-color: #FFFFFF;
+            border: 1px solid #CE796B;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .book-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .book-card h3 {
+            color: #5F758E;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .book-card p {
+            color: #717744;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to BookShelf</h1>
-    <p>Browse and manage your book collection.</p>
-
-    <!-- Login/Logout Button -->
-    <div>
-        {% if user.is_authenticated %}
-            <p>Hello, {{ user.username }}!</p>
-            <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-        {% else %}
-            <p>You are not logged in. <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a></p>
-        {% endif %}
-
-
-    <h2>Book API Data</h2>
-    <div id="books-container">
-        <p>Loading books...</p>
+    <header>
+        <img src="/static/images/logo.svg" alt="Bookshelf Logo">
+    </header>
+    <div class="book-section">
+        <h2>New Releases</h2>
+        <div class="book-grid" id="book-grid">
+        </div>
     </div>
-
     <script>
-        async function fetchBooks() {
-            const response = await fetch('/books/');
-            const books = await response.json();
-            const container = document.getElementById('books-container');
-            container.innerHTML = '';
-
-            books.forEach(book => {
-                const bookElement = document.createElement('p');
-                bookElement.textContent = `${book.title} by ${book.author}`;
-                container.appendChild(bookElement);
-            });
-        }
-
-        fetchBooks();
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("/books/") 
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch books");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const bookGrid = document.getElementById("book-grid");
+                    data.forEach(book => {
+                        const bookCard = document.createElement("div");
+                        bookCard.className = "book-card";
+                        bookCard.innerHTML = `
+                            <img src="${book.image_url || '/static/images/default-book.png'}" alt="${book.title}">
+                            <h3>${book.title}</h3>
+                            <p>${book.author || 'Unknown Author'}</p>
+                        `;
+                        bookGrid.appendChild(bookCard);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching books:", error);
+                });
+        });
     </script>
 </body>
 </html>
