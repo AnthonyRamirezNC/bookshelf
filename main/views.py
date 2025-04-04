@@ -8,7 +8,11 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 #templates
 def home(request):
-    return render(request, "index.html")
+    books = Book.objects.all() 
+    return render(request, "index.html", {"books": books})
+
+def book_detail(request, book_id):
+    return render(request, "book.html", {"book_id": book_id})
 
 #books
 @extend_schema(tags=["Books"])

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F9F3F0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #FFFFFF;
+            border: 1px solid #CE796B;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .book-title {
+            font-size: 28px;
+            color: #717744;
+            margin-bottom: 10px;
+        }
+        .book-author {
+            font-size: 18px;
+            color: #5F758E;
+            margin-bottom: 20px;
+        }
+        .book-description {
+            font-size: 16px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        .book-details {
+            font-size: 14px;
+            color: #5F758E;
+        }
+        .book-cover {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="book-cover" class="book-cover" src="" alt="Book Cover">
+        <h1 id="book-title" class="book-title">Book Title</h1>
+        <h2 id="book-author" class="book-author">Author: Unknown</h2>
+        <p id="book-description" class="book-description">Description not available.</p>
+        <div id="book-details" class="book-details">
+            <p><strong>Genre:</strong> <span id="book-genre">N/A</span></p>
+            <p><strong>Language:</strong> <span id="book-language">N/A</span></p>
+            <p><strong>Page Count:</strong> <span id="book-page-count">N/A</span></p>
+            <p><strong>Publisher:</strong> <span id="book-publisher">N/A</span></p>
+            <p><strong>Publication Date:</strong> <span id="book-publication-date">N/A</span></p>
+        </div>
+    </div>
+
+    <script>
+  
+        document.addEventListener("DOMContentLoaded", function () {
+            const bookId = "_ojXNuzgHRcC"; 
+            fetch(`/books/${bookId}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch book details");
+                    }
+                    return response.json();
+                })
+                .then(book => {
+                    document.getElementById("book-cover").src = book.image_url || "/static/images/default-book.png";
+                    document.getElementById("book-title").textContent = book.title || "Unknown Title";
+                    document.getElementById("book-author").textContent = `Author: ${book.author || "Unknown"}`;
+                    document.getElementById("book-description").textContent = book.description || "Description not available.";
+                    document.getElementById("book-genre").textContent = book.genre || "N/A";
+                    document.getElementById("book-language").textContent = book.language || "N/A";
+                    document.getElementById("book-page-count").textContent = book.page_count || "N/A";
+                    document.getElementById("book-publisher").textContent = book.publisher || "N/A";
+                    document.getElementById("book-publication-date").textContent = book.publication_date || "N/A";
+                })
+                .catch(error => {
+                    console.error("Error fetching book details:", error);
+                });
+        });
+    </script>
+</body>
+</html>
