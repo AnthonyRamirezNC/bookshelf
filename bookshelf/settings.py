@@ -117,7 +117,7 @@ if TESTING or "test" in sys.argv:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",  # Use in-memory SQLite database for faster tests
+            "NAME": BASE_DIR,
         }
     }
 else:
@@ -198,4 +198,5 @@ try:
     connection.ensure_connection()
     print("✅ Database connection successful!")
 except Exception as e:
-    print(f"❌ Database connection failed: {e}")
+    if not TESTING:
+        print(f"❌ Database connection failed: {e}")

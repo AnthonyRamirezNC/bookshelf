@@ -3,8 +3,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Book
-from .serializers import BookSerializer
+from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework.decorators import api_view
+import requests
+import os
 
 #templates
 def home(request):
@@ -13,6 +16,56 @@ def home(request):
 
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
+
+#external api views
+
+#get book data by genre
+@extend_schema(
+    tags=["External API"],
+    request = ExtGenreSerializer, #request serializer to show in docs
+    responses= {
+            200: OpenApiResponse(description="external Book retrieval by title successful"),
+            400: OpenApiResponse(description="Bad Request"),
+        }
+    )
+@api_view(["GET"])
+def ExtGetBooksByTitle(request, title):
+    url = f'https://www.googleapis.com/books/v1/volumes?q={title}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        IdentifierList = book_info.get("industryIdentifiers")
+        isbn = ""
+        for identifier in IdentifierList:
+            if identifier['type'] == 'ISBN_13':
+                isbn = identifier['identifier']
+        
+        book_serialized = BookSerializer(data={
+            "title": book_info.get("title"),
+            "authors": book_info.get("authors", []),
+            "publication_date": book_info.get("publishedDate"),
+            "publisher": book_info.get("publisher"),
+            "genres": book_info.get("categories", []),
+            "language": book_info.get("language"),
+            "page_count": book_info.get("pageCount"),
+            "isbn" : isbn,
+        })
+        if book_serialized.is_valid():
+            serialized_book_list.append(book_serialized.data)
+    return Response({
+        'message': f'Ext Call for title: {title} Successful',
+        'num_books_returned' : len(book_data_list),
+        'books_returned' : serialized_book_list,
+        }, status=status.HTTP_200_OK)
+
+#database views
+
 
 #books
 @extend_schema(tags=["Books"])
