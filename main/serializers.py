@@ -15,7 +15,11 @@ class BookSerializer(serializers.Serializer):
     publication_date = serializers.DateField(required=False, allow_null=True)
     publisher = serializers.CharField(max_length=255, allow_blank=True, required=False)
 
-    genre = serializers.CharField(max_length=100, allow_blank=True, required=False)
+    genres = serializers.ListField(
+        child=serializers.CharField(max_length=255),
+        allow_empty=True,
+        required=False
+    )
     language = serializers.CharField(max_length=50, allow_blank=True, required=False)
     page_count = serializers.IntegerField(required=False, allow_null=True)
 
