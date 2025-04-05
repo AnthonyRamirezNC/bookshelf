@@ -34,7 +34,7 @@ def book_detail(request, book_id):
     )
 @api_view(["GET"])
 def ExtGetBooksByTitle(request, title):
-    url = f'https://www.googleapis.com/books/v1/volumes?q={title}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    url = f'https://www.googleapis.com/books/v1/volumes?q=intitle:{title}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
     
     ext_response = requests.get(url)
     ext_response_data = ext_response.json()
@@ -67,6 +67,20 @@ def ExtGetBooksByTitle(request, title):
         'num_books_returned' : len(book_data_list),
         'books_returned' : serialized_book_list,
         }, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def ExtGetBooksByGenre(request, genre):
+    url = f'https://www.googleapis.com/books/v1/volumes?q=subject:{genre}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        IdentifierList = book_info.get("industryIdentifiers")
 
 #database views
 
