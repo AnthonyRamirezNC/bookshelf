@@ -21,6 +21,31 @@ def home(request):
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
+#helper methods
+def add_books_to_db(serialized_book_list):
+    for serialized_book in serialized_book_list:
+        #check if book exists based on isbn13 if not add it
+        if not check_if_book_in_db(serialized_book):
+            Book.objects.create(
+                title=serialized_book.get("title"),
+                authors=serialized_book.get("authors", []),
+                publication_date=serialized_book.get("publication_date"),
+                publisher=serialized_book.get("publisher"),
+                genres=serialized_book.get("genres", []),
+                language=serialized_book.get("language"),
+                page_count=serialized_book.get("page_count"),
+                isbn=serialized_book.get("isbn"),
+            )
+
+def check_if_book_in_db(serialized_book):
+    IdentifierList = serialized_book.get("industryIdentifiers")
+    isbn = ""
+    for identifier in IdentifierList:
+        if identifier['type'] == 'ISBN_13':
+            isbn = identifier['identifier']
+    return Book.objects.exists(isbn13=isbn)
+
+
 #external api views
 
 #get book data by genre
@@ -64,6 +89,115 @@ def ExtGetBooksByTitle(request, title):
             serialized_book_list.append(book_serialized.data)
     return Response({
         'message': f'Ext Call for title: {title} Successful',
+        'num_books_returned' : len(book_data_list),
+        'books_returned' : serialized_book_list,
+        }, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def ExtGetBooksByGenre(request, genre):
+    url = f'https://www.googleapis.com/books/v1/volumes?q=subject:{genre}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        IdentifierList = book_info.get("industryIdentifiers")
+        isbn = ""
+        for identifier in IdentifierList:
+            if identifier['type'] == 'ISBN_13':
+                isbn = identifier['identifier']
+        
+        book_serialized = BookSerializer(data={
+            "title": book_info.get("title"),
+            "authors": book_info.get("authors", []),
+            "publication_date": book_info.get("publishedDate"),
+            "publisher": book_info.get("publisher"),
+            "genres": book_info.get("categories", []),
+            "language": book_info.get("language"),
+            "page_count": book_info.get("pageCount"),
+            "isbn" : isbn,
+        })
+        if book_serialized.is_valid():
+            serialized_book_list.append(book_serialized.data)
+    return Response({
+        'message': f'Ext Call for genre: {genre} Successful',
+        'num_books_returned' : len(book_data_list),
+        'books_returned' : serialized_book_list,
+        }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def ExtGetBooksByAuthor(request, author):
+    url = f'https://www.googleapis.com/books/v1/volumes?q=inauthor:{author}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        IdentifierList = book_info.get("industryIdentifiers")
+        isbn = ""
+        for identifier in IdentifierList:
+            if identifier['type'] == 'ISBN_13':
+                isbn = identifier['identifier']
+        
+        book_serialized = BookSerializer(data={
+            "title": book_info.get("title"),
+            "authors": book_info.get("authors", []),
+            "publication_date": book_info.get("publishedDate"),
+            "publisher": book_info.get("publisher"),
+            "genres": book_info.get("categories", []),
+            "language": book_info.get("language"),
+            "page_count": book_info.get("pageCount"),
+            "isbn" : isbn,
+        })
+        if book_serialized.is_valid():
+            serialized_book_list.append(book_serialized.data)
+    return Response({
+        'message': f'Ext Call for author: {author} Successful',
+        'num_books_returned' : len(book_data_list),
+        'books_returned' : serialized_book_list,
+        }, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def ExtGetBooksByIsbn(request, isbn_query):
+    url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_query}&maxResults=20&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+    book_data_list = ext_response_data["items"]
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        IdentifierList = book_info.get("industryIdentifiers")
+        isbn = ""
+        for identifier in IdentifierList:
+            if identifier['type'] == 'ISBN_13':
+                isbn = identifier['identifier']
+        
+        book_serialized = BookSerializer(data={
+            "title": book_info.get("title"),
+            "authors": book_info.get("authors", []),
+            "publication_date": book_info.get("publishedDate"),
+            "publisher": book_info.get("publisher"),
+            "genres": book_info.get("categories", []),
+            "language": book_info.get("language"),
+            "page_count": book_info.get("pageCount"),
+            "isbn" : isbn,
+        })
+        if book_serialized.is_valid():
+            serialized_book_list.append(book_serialized.data)
+    return Response({
+        'message': f'Ext Call for isbn: {isbn_query} Successful',
         'num_books_returned' : len(book_data_list),
         'books_returned' : serialized_book_list,
         }, status=status.HTTP_200_OK)
