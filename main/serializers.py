@@ -23,6 +23,15 @@ class BookSerializer(serializers.Serializer):
     language = serializers.CharField(max_length=50, allow_blank=True, required=False)
     page_count = serializers.IntegerField(required=False, allow_null=True)
 
-
+#external api serializers
 class ExtGenreSerializer(serializers.Serializer):
     genre = serializers.CharField(max_length = 50)
+
+class ExtTitleSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length = 50)
+
+class ExtISBNSerializer(serializers.Serializer):
+    isbn = serializers.CharField(max_length = 50)
+
+class ExtAuthorSerializer(serializers.Serializer):
+    author = serializers.CharField(max_length = 50)
