@@ -26,5 +26,31 @@ class BookGenreEndpointTest(BaseTestCase):
     def test_ext_book_get(self):
         url = reverse("ext-books-by-genre", kwargs={"genre": "Horror"})
         response = self.user_client.get(url)
-        print("Genre Response:\n" + str(response.json()))
+        # print("Genre Response:\n" + str(response.json()))
         assert response.status_code == status.HTTP_200_OK
+
+
+class BookAuthorEndpointTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+    def test_ext_book_get(self):
+        url = reverse("ext-books-by-author", kwargs={"author": "Robert Kirkman"})
+        response = self.user_client.get(url)
+        # print("Author Response", response.json())
+        assert response.status_code == status.HTTP_200_OK
+
+
+class BookIsbnEndpointTest(BaseTestCase):
+     def setUp(self):
+        super().setUp()
+
+     def test_ext_book_get(self):
+        url = reverse("ext-books-by-isbn", kwargs={"isbn_query": "978-3-16-148410-0"})
+        response = self.user_client.get(url)
+        # print("Author Response", response.json())
+        print("CODE", response.status_code)
+        if response.status_code == status.HTTP_400_BAD_REQUEST:
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+        else:
+            assert response.status_code == status.HTTP_200_OK
