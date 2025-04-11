@@ -44,6 +44,9 @@ urlpatterns = [
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),
+    path("ext/books/search-genre/<str:genre>", ExtGetBooksByGenre, name="ext-books-by-genre"),
+    path("ext/books/search-author/<str:author>", ExtGetBooksByAuthor, name="ext-books-by-author"),
+    path("ext/books/search-isbn/<str:isbn>", ExtGetBooksByIsbn, name="ext-books-by-isbn"),
 
     path("book/<str:book_id>/", book_detail, name="book-detail"),
 ]
