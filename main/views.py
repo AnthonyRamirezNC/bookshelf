@@ -234,9 +234,9 @@ def ExtGetBooksByAuthor(request, author):
         }
     )
 @api_view(["GET"])
-def ExtGetBooksByIsbn(request, isbn_query):
+def ExtGetBooksByIsbn(request, isbn):
     try:
-        url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_query}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+        url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
         
         ext_response = requests.get(url)
         ext_response_data = ext_response.json()

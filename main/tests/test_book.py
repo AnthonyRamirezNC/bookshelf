@@ -46,7 +46,7 @@ class BookIsbnEndpointTest(BaseTestCase):
         super().setUp()
 
      def test_ext_book_get(self):
-        url = reverse("ext-books-by-isbn", kwargs={"isbn_query": "978-3-16-148410-0"})
+        url = reverse("ext-books-by-isbn", kwargs={"isbn": "978-3-16-148410-0"})
         response = self.user_client.get(url)
         # print("Author Response", response.json())
         print("CODE", response.status_code)
