@@ -38,10 +38,9 @@ urlpatterns = [
 
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
 
-    # Used for login testing, remove when needed
-    # path("login/", login_view, name="login"),
-    # path("register/", register, name="register"),
-    # path("logout/", auth_views.LogoutView.as_view(), name="logout")
+     path("login/", login_view, name="login"),
+     path("register/", register, name="register"),
+     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),
