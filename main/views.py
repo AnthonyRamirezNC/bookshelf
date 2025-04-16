@@ -12,6 +12,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import api_view
 import requests
 import os
+import pyisbn
+from datetime import datetime
+from .cached_book_links import get_link_with_ISBN
 
 #templates
 def home(request):
@@ -39,6 +42,15 @@ def add_book_to_db(serialized_book):
 def check_if_book_in_db(serialized_book):
     return Book.objects.filter(isbn=serialized_book.get("isbn")).exists()
 
+def normalize_pub_date(pub_date):
+    if not pub_date:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y-%m", "%Y"):
+        try:
+            return datetime.strptime(pub_date, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 #external api views
 
@@ -60,31 +72,73 @@ def ExtGetBooksByTitle(request, title):
         ext_response_data = ext_response.json()
         book_data_list = ext_response_data["items"]
         serialized_book_list = []
+        #serialize each book in the book list
         for book in book_data_list:
             book: dict
             book_info = book["volumeInfo"]
 
+            #extract ISBN13
             if book_info.get("industryIdentifiers"):
                 IdentifierList = book_info.get("industryIdentifiers")
                 isbn = ""
                 for identifier in IdentifierList:
+                    #add isbn13
                     if identifier['type'] == 'ISBN_13':
                         isbn = identifier['identifier']
+                    #if isbn10 convert to isbn13
+                    else:
+                        isbn10 = identifier['identifier']
+                        if(len(isbn10) == 10):
+                            isbn = pyisbn.convert(isbn10)
+                
+                #extract image if in google books
+                if book_info.get("imageLinks"):
+                    img_src = book_info["imageLinks"]
+                #if not present, search in csv
+                else:
+                    print("No Image Found for ISBN: ")
+                    print(isbn)
+                    isbn13 = isbn
+                    isbn10 = None
+                    if(isbn13[:3] == "978"):
+                        isbn10 = pyisbn.convert(isbn13)
+
+                    print("searching csv with both isbn10 and 13 if applicable")
+                    
+                    cover_img_src = get_link_with_ISBN(isbn13)
+                    if(cover_img_src is None and isbn10 is not None):
+                        #try with isbn10
+                        cover_img_src = get_link_with_ISBN(isbn10)
+
+                    if(cover_img_src is None):
+                        print("Cover image not found in cache")
+                    
+                    
             else:
                 continue
-            
+
+
+            if(len(book_info.get("title")) > 255):
+                title = book_info.get("title")[:255]
+            else: title = book_info.get("title")
+
             book_serialized = BookSerializer(data={
-                "title": book_info.get("title"),
+                "title": title,
                 "authors": book_info.get("authors", []),
-                "publication_date": book_info.get("publishedDate"),
-                "publisher": book_info.get("publisher"),
+                "publication_date": normalize_pub_date(book_info.get("publishedDate")),
+                "publisher": book_info.get("publisher", "Unknown"),
                 "genres": book_info.get("categories", []),
                 "language": book_info.get("language"),
                 "page_count": book_info.get("pageCount"),
-                "isbn" : isbn,
+                "isbn13" : isbn,
+                "img_src" : img_src['thumbnail']
             })
             if book_serialized.is_valid():
                 serialized_book_list.append(book_serialized.data)
+            else: 
+                print("could not serialize book because: \n")
+                print(book_serialized.errors)
+
             message = f'Ext Call for title: {title} Successful'
         return Response({
             'message': message,
