@@ -9,4 +9,3 @@ class MainConfig(AppConfig):
     def ready(self):
         from . import cached_book_links  # Import to trigger load
         cached_book_links.load_df()
-        print("Books csv loaded")

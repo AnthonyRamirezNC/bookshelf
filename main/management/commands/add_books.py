@@ -6,4 +6,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         addBooksByLetter()
-        self.stdout.write(self.style.SUCCESS("Book added to DB successfully"))
+        self.stdout.write(self.style.SUCCESS("Books added to DB successfully"))
