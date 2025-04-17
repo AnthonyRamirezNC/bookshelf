@@ -12,6 +12,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import api_view
 import requests
 import os
+import pyisbn
+from datetime import datetime
+from .cached_book_links import get_link_with_ISBN
 
 #templates
 def home(request):
@@ -28,17 +31,92 @@ def add_book_to_db(serialized_book):
         Book.objects.create(
             title=serialized_book.get("title"),
             authors=serialized_book.get("authors", []),
+            isbn13=serialized_book.get("isbn13"),
             publication_date=serialized_book.get("publication_date"),
             publisher=serialized_book.get("publisher"),
             genres=serialized_book.get("genres", []),
             language=serialized_book.get("language"),
             page_count=serialized_book.get("page_count"),
-            isbn=serialized_book.get("isbn"),
+            img_src=serialized_book.get("img_src")
         )
 
 def check_if_book_in_db(serialized_book):
-    return Book.objects.filter(isbn=serialized_book.get("isbn")).exists()
+    return Book.objects.filter(isbn13=serialized_book.get("isbn13")).exists()
 
+def normalize_pub_date(pub_date):
+    if not pub_date:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y-%m", "%Y"):
+        try:
+            return datetime.strptime(pub_date, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+def serialize_books_from_ext_response(book_data_list):
+    serialized_book_list = []
+    for book in book_data_list:
+        book: dict
+        book_info = book["volumeInfo"]
+
+        #extract ISBN13
+        if book_info.get("industryIdentifiers"):
+            IdentifierList = book_info.get("industryIdentifiers")
+            isbn = ""
+            for identifier in IdentifierList:
+                #add isbn13
+                if identifier['type'] == 'ISBN_13':
+                    isbn = identifier['identifier']
+                #if isbn10 convert to isbn13
+                else:
+                    isbn10 = identifier['identifier']
+                    if(len(isbn10) == 10):
+                        isbn = pyisbn.convert(isbn10)
+            
+            #extract image if in google books
+            if book_info.get("imageLinks"):
+                img_src = book_info["imageLinks"]
+                src_link = img_src['thumbnail']
+            #if not present, search in csv
+            else:
+                #No Image Found for ISBN
+                isbn13 = isbn
+                isbn10 = None
+                if(isbn13[:3] == "978"):
+                    isbn10 = pyisbn.convert(isbn13)
+                #searching csv with both isbn10 and 13 if applicable
+                src_link = get_link_with_ISBN(isbn13)
+                if(src_link is None and isbn10 is not None):
+                    #try with isbn10
+                    src_link = get_link_with_ISBN(isbn10)
+        else:
+            continue
+
+        if(len(book_info.get("title")) > 255):
+            title = book_info.get("title")[:255]
+        else: title = book_info.get("title")
+
+        if(src_link is None):
+            #Cover image not found
+            src_link = "Missing"
+
+        book_serialized = BookSerializer(data={
+            "title": title,
+            "authors": book_info.get("authors", []),
+            "publication_date": normalize_pub_date(book_info.get("publishedDate")),
+            "publisher": book_info.get("publisher", "Unknown"),
+            "genres": book_info.get("categories", []),
+            "language": book_info.get("language"),
+            "page_count": book_info.get("pageCount"),
+            "isbn13" : isbn,
+            "img_src" : src_link
+        })
+        if book_serialized.is_valid():
+            serialized_book_list.append(book_serialized.data)
+        else: 
+            print("could not serialize book because: \n")
+            print(book_serialized.errors)
+    return serialized_book_list
 
 #external api views
 
@@ -55,39 +133,14 @@ def check_if_book_in_db(serialized_book):
 @api_view(["GET"])
 def ExtGetBooksByTitle(request, title):
     try:
-        url = f'https://www.googleapis.com/books/v1/volumes?q={title}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+        url = f'https://www.googleapis.com/books/v1/volumes?q=intitle:{title}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
         ext_response = requests.get(url)
         ext_response_data = ext_response.json()
         book_data_list = ext_response_data["items"]
-        serialized_book_list = []
-        for book in book_data_list:
-            book: dict
-            book_info = book["volumeInfo"]
-
-            if book_info.get("industryIdentifiers"):
-                IdentifierList = book_info.get("industryIdentifiers")
-                isbn = ""
-                for identifier in IdentifierList:
-                    if identifier['type'] == 'ISBN_13':
-                        isbn = identifier['identifier']
-            else:
-                continue
-            
-            book_serialized = BookSerializer(data={
-                "title": book_info.get("title"),
-                "authors": book_info.get("authors", []),
-                "publication_date": book_info.get("publishedDate"),
-                "publisher": book_info.get("publisher"),
-                "genres": book_info.get("categories", []),
-                "language": book_info.get("language"),
-                "page_count": book_info.get("pageCount"),
-                "isbn" : isbn,
-            })
-            if book_serialized.is_valid():
-                serialized_book_list.append(book_serialized.data)
-            message = f'Ext Call for title: {title} Successful'
+        #serialize each book in the book list
+        serialized_book_list = serialize_books_from_ext_response(book_data_list)
         return Response({
-            'message': message,
+            'message': f'Ext Call for title: {title} Successful',
             'num_books_returned' : len(serialized_book_list),
             'books_returned' : serialized_book_list,
             }, status=status.HTTP_200_OK)
@@ -101,7 +154,9 @@ def ExtGetBooksByTitle(request, title):
             'message': "An internal error occured",
             'error' : str(e),
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
+
+       
 @extend_schema(
     tags=["External API"],
     request = ExtGenreSerializer, #request serializer to show in docs
@@ -118,35 +173,11 @@ def ExtGetBooksByGenre(request, genre):
         ext_response = requests.get(url)
         ext_response_data = ext_response.json()
         book_data_list = ext_response_data["items"]
-        serialized_book_list = []
-        for book in book_data_list:
-            book: dict
-            book_info = book["volumeInfo"]
-
-            if book_info.get("industryIdentifiers"):
-                IdentifierList = book_info.get("industryIdentifiers")
-                isbn = ""
-                for identifier in IdentifierList:
-                    if identifier['type'] == 'ISBN_13':
-                        isbn = identifier['identifier']
-            else:
-                continue
-            
-            book_serialized = BookSerializer(data={
-                "title": book_info.get("title"),
-                "authors": book_info.get("authors", []),
-                "publication_date": book_info.get("publishedDate"),
-                "publisher": book_info.get("publisher"),
-                "genres": book_info.get("categories", []),
-                "language": book_info.get("language"),
-                "page_count": book_info.get("pageCount"),
-                "isbn" : isbn,
-            })
-            if book_serialized.is_valid():
-                serialized_book_list.append(book_serialized.data)
-            message = f'Ext Call for genre: {genre} Successful'
+        #serialize each book in the book list
+        serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        
         return Response({
-            'message': message,
+            'message': f'Ext Call for Genre: {genre}',
             'num_books_returned' : len(serialized_book_list),
             'books_returned' : serialized_book_list,
             }, status=status.HTTP_200_OK)
@@ -161,6 +192,7 @@ def ExtGetBooksByGenre(request, genre):
             'error' : str(e),
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        
 @extend_schema(
     tags=["External API"],
     request = ExtAuthorSerializer, #request serializer to show in docs
@@ -174,49 +206,21 @@ def ExtGetBooksByGenre(request, genre):
 def ExtGetBooksByAuthor(request, author):
     try:
         url = f'https://www.googleapis.com/books/v1/volumes?q=inauthor:{author}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
-        
         ext_response = requests.get(url)
         ext_response_data = ext_response.json()
-        if ext_response_data["items"]:
-            book_data_list = ext_response_data["items"]
-            serialized_book_list = []
-            for book in book_data_list:
-                book: dict
-                book_info = book["volumeInfo"]
-
-                if book_info.get("industryIdentifiers"):
-                    IdentifierList = book_info.get("industryIdentifiers")
-                    isbn = ""
-                    for identifier in IdentifierList:
-                        if identifier['type'] == 'ISBN_13':
-                            isbn = identifier['identifier']
-                else: 
-                    continue
-                
-                book_serialized = BookSerializer(data={
-                    "title": book_info.get("title"),
-                    "authors": book_info.get("authors", []),
-                    "publication_date": book_info.get("publishedDate"),
-                    "publisher": book_info.get("publisher"),
-                    "genres": book_info.get("categories", []),
-                    "language": book_info.get("language"),
-                    "page_count": book_info.get("pageCount"),
-                    "isbn" : isbn,
-                })
-                if book_serialized.is_valid():
-                    serialized_book_list.append(book_serialized.data)
-                message = f'Ext Call for author: {author} Successful'
-        else: 
-            message = f'Ext Call for Author: {author} Successful But no results returned'
+        book_data_list = ext_response_data["items"]
+        #serialize each book in the book list
+        serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        
         return Response({
-            'message': message,
+            'message': f'Ext Call for Author: {author} Successful',
             'num_books_returned' : len(serialized_book_list),
             'books_returned' : serialized_book_list,
             }, status=status.HTTP_200_OK)
     except Exception as e:
         if str(e) == "'items'":
             return Response({
-            'message': f'Ext Call for author: {author} Successful but no results returned',
+            'message': f'Ext Call for Author: {author} Successful but no results returned',
             }, status=status.HTTP_200_OK)
         else:
             return Response({
@@ -237,49 +241,21 @@ def ExtGetBooksByAuthor(request, author):
 def ExtGetBooksByIsbn(request, isbn):
     try:
         url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
-        
         ext_response = requests.get(url)
         ext_response_data = ext_response.json()
-        if ext_response_data["items"]:
-            book_data_list = ext_response_data["items"]
-            serialized_book_list = []
-            for book in book_data_list:
-                book: dict
-                book_info = book["volumeInfo"]
-
-                if book_info.get("industryIdentifiers"):
-                    IdentifierList = book_info.get("industryIdentifiers")
-                    isbn = ""
-                    for identifier in IdentifierList:
-                        if identifier['type'] == 'ISBN_13':
-                            isbn = identifier['identifier']
-                else: 
-                    continue
-                
-                book_serialized = BookSerializer(data={
-                    "title": book_info.get("title"),
-                    "authors": book_info.get("authors", []),
-                    "publication_date": book_info.get("publishedDate"),
-                    "publisher": book_info.get("publisher"),
-                    "genres": book_info.get("categories", []),
-                    "language": book_info.get("language"),
-                    "page_count": book_info.get("pageCount"),
-                    "isbn" : isbn,
-                })
-                if book_serialized.is_valid():
-                    serialized_book_list.append(book_serialized.data)
-                message = f'Ext Call for isbn: {isbn} Successful'
-        else: 
-            message = f'Ext Call for isbn: {isbn} Successful But no results returned'
+        book_data_list = ext_response_data["items"]
+        #serialize each book in the book list
+        serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        
         return Response({
-            'message': message,
+            'message': f'Ext Call for ISBN: {isbn} Successful',
             'num_books_returned' : len(serialized_book_list),
             'books_returned' : serialized_book_list,
             }, status=status.HTTP_200_OK)
     except Exception as e:
         if str(e) == "'items'":
             return Response({
-            'message': f'Ext Call for isbn: {isbn} Successful but no results returned',
+            'message': f'Ext Call for ISBN: {isbn} Successful but no results returned',
             }, status=status.HTTP_200_OK)
         else:
             return Response({
