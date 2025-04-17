@@ -24,3 +24,17 @@ class Book(models.Model):
 
     class Meta:
         db_table = "api_book"
+
+
+class BookInteraction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    liked = models.BooleanField(default=False)
+    rating = models.IntegerField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        unique_together = ('user', 'book')
+
+
