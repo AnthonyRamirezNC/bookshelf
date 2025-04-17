@@ -391,14 +391,13 @@ def get_users_profile(request):
 #like book based on isbn
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def like_book_with_isbn(request):
-    isbn = request.data.get('isbn')
+def like_book_with_isbn(request, isbn):
     if(len(isbn) == 10):
         #convert to isbn13
         isbn = pyisbn.convert(isbn)
     
     try:
-        book = Book.objects.get(isbn=isbn)
+        book = Book.objects.get(isbn13=isbn)
         user_profile = UserProfile.objects.get(user=request.user)
         user_profile.liked_books.add(book)
         return Response({"message": "Book liked!"})

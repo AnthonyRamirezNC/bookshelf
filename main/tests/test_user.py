@@ -30,5 +30,7 @@ class UserProfileEndpointsTest(BaseTestCase):
         response = self.user_client.get(url)
         response_data = response.data
         profile_data =  response_data["profile_data"]
+        # print("Liked Books: \n ")
+        # print(profile_data["liked_books"])
         recently_liked_book = profile_data["liked_books"][-1]
         assert recently_liked_book["isbn13"] == "9783161484100"
