@@ -127,7 +127,6 @@ def serialize_books_from_ext_response(book_data_list):
     request = ExtTitleSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by title successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -163,7 +162,6 @@ def ExtGetBooksByTitle(request, title):
     request = ExtGenreSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by genre successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -199,7 +197,6 @@ def ExtGetBooksByGenre(request, genre):
     request = ExtAuthorSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by author successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -234,7 +231,6 @@ def ExtGetBooksByAuthor(request, author):
     request = ExtISBNSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by isbn successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -300,8 +296,7 @@ class BookListCreateView(APIView):
     @extend_schema(
         request=BookSerializer(many=True),
         responses={
-            200: OpenApiResponse(description="Book Retrieval successful"),
-            400: OpenApiResponse(description="Bad Request"),
+            200: OpenApiResponse(description="Book Retrieval successful")
         },
     )
     def get(self, request):
@@ -375,6 +370,15 @@ class BookDetailView(APIView):
 
 #User Profile endpoints
 #get User Profile based on user
+@extend_schema(
+tags=["User Profile"],
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+) 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users_profile(request):
@@ -387,7 +391,18 @@ def get_users_profile(request):
         })
     except UserProfile.DoesNotExist:
         return Response({"error": "User Profile not found"}, status=404)
-    
+
+
+@extend_schema(
+tags=["User Profile"],
+request = ExtISBNSerializer, #request serializer to show in docs
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+) 
 #like book based on isbn
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -403,3 +418,34 @@ def like_book_with_isbn(request, isbn):
         return Response({"message": "Book liked!"})
     except Book.DoesNotExist:
         return Response({"error": "Book not found"}, status=404)
+
+
+@extend_schema(
+tags=["User Profile"],
+request = UserProfileSerializer, #request serializer to show in docs
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+#update user profile
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_user_profile(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserProfileSerializer(instance=user_profile, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "User profile updated successfully.",
+            "profile": serializer.data
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

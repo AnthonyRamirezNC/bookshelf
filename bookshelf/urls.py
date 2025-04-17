@@ -45,7 +45,7 @@ urlpatterns = [
     #user profiles
     path("user/profile", get_users_profile, name="get-user-profile"),
     path("user/profile/like-book-isbn/<str:isbn>", like_book_with_isbn, name="like-book-by-isbn"),
-
+    path("user/profile/edit", update_user_profile, name="edit-user-profile"),
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),
