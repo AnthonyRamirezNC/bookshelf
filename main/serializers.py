@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from main.models import Book
+from main.models import *
 import uuid
 
 #book
@@ -23,6 +23,15 @@ class BookSerializer(serializers.Serializer):
     language = serializers.CharField(max_length=50, allow_blank=True, required=False)
     page_count = serializers.IntegerField(required=False, allow_null=True)
     img_src = serializers.CharField(allow_blank = True, required=False)
+
+#User Profile
+class UserProfileSerializer(serializers.ModelSerializer):
+    liked_books = BookSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ["bio", "display_name", "liked_books"]
+
 
 #external api serializers
 class ExtGenreSerializer(serializers.Serializer):

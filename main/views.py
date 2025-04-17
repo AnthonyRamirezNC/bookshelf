@@ -2,14 +2,15 @@ from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Book
+from rest_framework.permissions import IsAuthenticated
+from .models import *
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 import requests
 import os
 import pyisbn
@@ -38,7 +39,7 @@ def add_book_to_db(serialized_book):
             language=serialized_book.get("language"),
             page_count=serialized_book.get("page_count"),
             img_src=serialized_book.get("img_src")
-        )
+        ) 
 
 def check_if_book_in_db(serialized_book):
     return Book.objects.filter(isbn13=serialized_book.get("isbn13")).exists()
@@ -370,3 +371,36 @@ class BookDetailView(APIView):
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+#User Profile endpoints
+#get User Profile based on user
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_users_profile(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        serialized_profile = UserProfileSerializer(user_profile)
+        return Response({
+        "message" : "User Profile Found",
+        "profile_data" : serialized_profile.data
+        })
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User Profile not found"}, status=404)
+    
+#like book based on isbn
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_book_with_isbn(request):
+    isbn = request.data.get('isbn')
+    if(len(isbn) == 10):
+        #convert to isbn13
+        isbn = pyisbn.convert(isbn)
+    
+    try:
+        book = Book.objects.get(isbn=isbn)
+        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile.liked_books.add(book)
+        return Response({"message": "Book liked!"})
+    except Book.DoesNotExist:
+        return Response({"error": "Book not found"}, status=404)

@@ -49,7 +49,6 @@ class BookIsbnEndpointTest(BaseTestCase):
         url = reverse("ext-books-by-isbn", kwargs={"isbn": "978-3-16-148410-0"})
         response = self.user_client.get(url)
         # print("Author Response", response.json())
-        print("CODE", response.status_code)
         if response.status_code == status.HTTP_400_BAD_REQUEST:
             assert response.status_code == status.HTTP_400_BAD_REQUEST
         else:
