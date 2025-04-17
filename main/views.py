@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Book
+from .recommender import build_recommendations
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.contrib.auth import login, authenticate
@@ -10,6 +11,8 @@ from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import api_view
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 import requests
 import os
 
@@ -394,3 +397,21 @@ class BookDetailView(APIView):
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+
+@login_required
+@api_view(['GET'])
+def recommend_books(request):
+    user = request.user
+    book_ids = build_recommendations(user)
+    books = Book.objects.filter(id__in=book_ids)
+
+    data = [{
+        'title': book.title,
+        'authors': book.authors,
+        'genres' : book.genres,
+
+    } for book in books]
+
+
+    return JsonResponse({'recomendations': data})
