@@ -2,14 +2,15 @@ from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Book
+from rest_framework.permissions import IsAuthenticated
+from .models import *
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 import requests
 import os
 import pyisbn
@@ -38,7 +39,7 @@ def add_book_to_db(serialized_book):
             language=serialized_book.get("language"),
             page_count=serialized_book.get("page_count"),
             img_src=serialized_book.get("img_src")
-        )
+        ) 
 
 def check_if_book_in_db(serialized_book):
     return Book.objects.filter(isbn13=serialized_book.get("isbn13")).exists()
@@ -66,10 +67,10 @@ def serialize_books_from_ext_response(book_data_list):
             for identifier in IdentifierList:
                 #add isbn13
                 if identifier['type'] == 'ISBN_13':
-                    isbn = identifier['identifier']
+                    isbn = identifier['identifier'].replace("-", "")
                 #if isbn10 convert to isbn13
                 else:
-                    isbn10 = identifier['identifier']
+                    isbn10 = identifier['identifier'].replace("-", "")
                     if(len(isbn10) == 10):
                         isbn = pyisbn.convert(isbn10)
             
@@ -126,7 +127,6 @@ def serialize_books_from_ext_response(book_data_list):
     request = ExtTitleSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by title successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -162,7 +162,6 @@ def ExtGetBooksByTitle(request, title):
     request = ExtGenreSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by genre successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -198,7 +197,6 @@ def ExtGetBooksByGenre(request, genre):
     request = ExtAuthorSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by author successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
@@ -233,12 +231,12 @@ def ExtGetBooksByAuthor(request, author):
     request = ExtISBNSerializer, #request serializer to show in docs
     responses= {
             200: OpenApiResponse(description="external Book retrieval by isbn successful"),
-            400: OpenApiResponse(description="Bad Request"),
             500: OpenApiResponse(description="Internal server error"),
         }
     )
 @api_view(["GET"])
-def ExtGetBooksByIsbn(request, isbn):
+def ExtGetBooksByIsbn(request, isbn: str):
+    isbn = isbn.replace("-", "")
     try:
         url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
         ext_response = requests.get(url)
@@ -299,8 +297,7 @@ class BookListCreateView(APIView):
     @extend_schema(
         request=BookSerializer(many=True),
         responses={
-            200: OpenApiResponse(description="Book Retrieval successful"),
-            400: OpenApiResponse(description="Bad Request"),
+            200: OpenApiResponse(description="Book Retrieval successful")
         },
     )
     def get(self, request):
@@ -370,3 +367,141 @@ class BookDetailView(APIView):
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+#User Profile endpoints
+#get User Profile based on user
+@extend_schema(
+tags=["User Profile"],
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+) 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_users_profile(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        serialized_profile = UserProfileSerializer(user_profile)
+        return Response({
+        "message" : "User Profile Found",
+        "profile_data" : serialized_profile.data
+        })
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User Profile not found"}, status=404)
+
+
+@extend_schema(
+tags=["User Profile"],
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+) 
+#like book based on isbn
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_book_with_isbn(request, isbn):
+    isbn = isbn.replace("-", "")
+    if len(isbn) == 10:
+        isbn = pyisbn.convert(isbn)
+
+    try:
+        # Try to get book locally
+        book = Book.objects.get(isbn13=isbn)
+    except Book.DoesNotExist:
+        # Query Google Books API
+        url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=1&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+        ext_response = requests.get(url)
+        ext_response_data = ext_response.json()
+
+        if "items" not in ext_response_data:
+            return Response({"error": "No books found with that ISBN"}, status=404)
+
+        book_data_list = ext_response_data["items"]
+        serialized_books = serialize_books_from_ext_response(book_data_list)
+
+        if not serialized_books:
+            return Response({"error": "Failed to process external book data"}, status=400)
+
+        book_data = serialized_books[0]
+        try:
+            book = Book.objects.create(**book_data)
+        except Exception as e:
+            return Response({"error": f"Failed to create book: {str(e)}"}, status=500)
+
+    # Add book to liked_books
+    user_profile = UserProfile.objects.get(user=request.user)
+    user_profile.liked_books.add(book)
+
+    return Response({"message": "Book liked!"})
+
+@extend_schema(
+tags=["User Profile"],
+request = UserProfileSerializer, #request serializer to show in docs
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+#update user profile
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_user_profile(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserProfileSerializer(instance=user_profile, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "User profile updated successfully.",
+            "profile": serializer.data
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#create user profile
+@extend_schema(
+tags=["User Profile"],
+request = UserProfileSerializer, #request serializer to show in docs
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_user_profile(request):
+    user = request.user
+
+    # Check if the profile already exists
+    if UserProfile.objects.filter(user=user).exists():
+        return Response({
+            "message" : "User Profile already exists",
+        })
+ 
+    serializer = UserProfileSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=user)
+        return Response({
+            "message": "User profile created successfully.",
+            "profile": serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
