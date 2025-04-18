@@ -25,6 +25,10 @@ def home(request):
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
+def profile(request):
+    user_profile = UserProfile.objects.get(user=request.user) 
+    return render(request, "user_profile.html", {"profile": user_profile})
+
 #helper methods
 def add_book_to_db(serialized_book):
     #check if book exists based on isbn13 if not add it

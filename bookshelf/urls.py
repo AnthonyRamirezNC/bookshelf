@@ -33,6 +33,8 @@ urlpatterns = [
     #templates
     path("", home, name="home"),
 
+    path("user/profile", profile, name="profile"),
+
     #Books
     path("books/", BookListCreateView.as_view(), name="book-list-create"),
 
@@ -42,11 +44,11 @@ urlpatterns = [
     path("register/", register, name="register"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
-    #user profiles
-    path("user/profile", get_users_profile, name="get-user-profile"),
+    #user profiles    
     path("user/profile/like-book-isbn/<str:isbn>", like_book_with_isbn, name="like-book-by-isbn"),
     path("user/profile/edit", update_user_profile, name="edit-user-profile"),
     path("user/profile/create", create_user_profile, name = "create-user-profile"),
+    path("user/get-profile", get_users_profile, name="get-user-profile"),
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),
