@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth.decorators import login_required
+
 import requests
 import os
 import pyisbn
@@ -25,6 +27,7 @@ def home(request):
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
+@login_required(login_url='/login/')
 def profile(request):
     user_profile = UserProfile.objects.get(user=request.user) 
     return render(request, "user_profile.html", {"profile": user_profile})
