@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Book(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -14,6 +14,7 @@ class Book(models.Model):
     language = models.CharField(max_length=50, blank=True, null=True)
     page_count = models.IntegerField(blank=True, null=True)
     img_src = models.CharField(max_length=255, default="Missing", blank=True, null=True)
+    average_rating = models.FloatField(null=True, blank=True)
     class Meta:
         db_table = "api_book"
 
@@ -22,7 +23,24 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     display_name = models.CharField(max_length=255, blank=True, null=True)
     liked_books = models.ManyToManyField(Book, blank=True)
+    reviewed_books = models.ManyToManyField(Book, through='Review', related_name='user_reviews')
 
     class Meta:
         db_table = "api_user_profile"
 
+class Review(models.Model):
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    rating = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5)
+        ]
+    )
+    review = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user_profile', 'book') #limit to 1 per user profile

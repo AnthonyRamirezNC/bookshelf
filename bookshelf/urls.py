@@ -37,6 +37,7 @@ urlpatterns = [
     path("books/", BookListCreateView.as_view(), name="book-list-create"),
 
     path("books/<uuid:book_id>/", BookDetailView.as_view(), name="book-detail"),
+    #path("books/<str:isbn>/", book_isbn_view, name="book-detail-by-isbn"),
 
     path("login/", login_view, name="login"),
     path("register/", register, name="register"),
@@ -47,6 +48,12 @@ urlpatterns = [
     path("user/profile/like-book-isbn/<str:isbn>", like_book_with_isbn, name="like-book-by-isbn"),
     path("user/profile/edit", update_user_profile, name="edit-user-profile"),
     path("user/profile/create", create_user_profile, name = "create-user-profile"),
+
+    #reviews
+    path("reviews/user", get_all_reviews_by_user, name="get-users-reviews"),
+    path("reviews/book/<str:isbn>/", get_all_reviews_by_isbn, name="get-reviews-by-isbn"),
+    path("reviews/create/<str:isbn>/", create_review_with_isbn, name="create-review"),
+    path("reviews/edit/<str:isbn>/", edit_review_with_isbn, name="edit-review"),
 
     #external books apis
     path("ext/books/search-title/<str:title>", ExtGetBooksByTitle, name="ext-books-by-title"),
