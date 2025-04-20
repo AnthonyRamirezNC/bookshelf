@@ -126,6 +126,27 @@ def serialize_books_from_ext_response(book_data_list):
             print(book_serialized.errors)
     return serialized_book_list
 
+def create_book_item(isbn):
+    url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=1&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+    ext_response = requests.get(url)
+    ext_response_data = ext_response.json()
+
+    if "items" not in ext_response_data:
+        return None
+
+    book_data_list = ext_response_data["items"]
+    serialized_books = serialize_books_from_ext_response(book_data_list)
+
+    if not serialized_books:
+        return None
+
+    book_data = serialized_books[0]
+    try:
+        book = Book.objects.create(**book_data)
+        return book
+    except Exception as e:
+        return None
+
 #external api views
 
 #get book data by title
@@ -242,7 +263,7 @@ def ExtGetBooksByAuthor(request, author):
         }
     )
 @api_view(["GET"])
-def ExtGetBooksByIsbn(request, isbn: str):
+def ExtGetBooksByIsbn(request, isbn):
     isbn = isbn.replace("-", "")
     try:
         url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
@@ -377,6 +398,7 @@ class BookDetailView(APIView):
 
 
 #User Profile endpoints
+
 #get User Profile based on user
 @extend_schema(
 tags=["User Profile"],
@@ -512,3 +534,158 @@ def create_user_profile(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Review Endpoints
+
+#create review
+@extend_schema(
+    tags=["Reviews"],
+    request=ReviewSerializer,
+    responses={
+        201: OpenApiResponse(description="Review created successfully"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User profile or Book not found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_review_with_isbn(request, isbn):
+    isbn = isbn.replace("-", "")
+    serializer = ReviewSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+            book = Book.objects.get(isbn13=isbn)
+        except Book.DoesNotExist:
+            book=create_book_item(isbn)
+            if book is None:
+                return Response({
+                "message": "Book with that isbn could not be found or created",
+            }, status=status.HTTP_404_NOT_FOUND)
+        except UserProfile.DoesNotExist:
+            return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent duplicate reviews
+        if Review.objects.filter(user_profile=user_profile, book=book).exists():
+            return Response({
+                "error": "Review already exists for this book by the user, call edit endpoint instead."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(user_profile=user_profile, book=book)
+        return Response({
+            "message": "Review created successfully.",
+            "review": serializer.data
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    tags=["Reviews"],
+    request=ReviewSerializer,
+    responses={
+        201: OpenApiResponse(description="Review created successfully"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User profile or Book not found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def edit_review_with_isbn(request, isbn):
+    isbn = isbn.replace("-", "")
+    try:
+        if not isbn:
+            return Response({"error": "ISBN is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_profile = UserProfile.objects.get(user=request.user)
+        book = Book.objects.get(isbn13=isbn)
+        review = Review.objects.get(book=book, user_profile=user_profile)
+
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+    except Book.DoesNotExist:
+        return Response({"error": "Book not found with that ISBN."}, status=status.HTTP_404_NOT_FOUND)
+    except Review.DoesNotExist:
+        return Response({"error": "Trying to edit review that doesn't exist. Create one first."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ReviewSerializer(instance=review, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "Review updated successfully.",
+            "review": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
+@extend_schema(
+    tags=["Reviews"],
+    request=ExtISBNSerializer,
+    responses={
+        200: OpenApiResponse(
+            response=UserReviewSerializer(many=True),
+            description="List of reviews for the book."
+        ),
+        400: OpenApiResponse(description="Bad Request"),
+        404: OpenApiResponse(description="Book not found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_reviews_by_isbn(request, isbn):
+    isbn = isbn.replace("-", "")
+    try:
+        book = Book.objects.get(isbn13=isbn)
+    except Book.DoesNotExist:
+        book=create_book_item(isbn)
+        if book is None:
+            return Response({
+            "message": "Book with that isbn could not be found or created",
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    reviews = Review.objects.filter(book=book)
+
+    serialized = UserReviewSerializer(reviews, many=True)
+    review_list = []
+
+    for review_data in serialized.data:
+        review_data["isbn13"] = isbn
+        review_list.append(review_data)
+
+    return Response({
+        "message": f"Found {len(reviews)} reviews for the book.",
+        "reviews": review_list
+    }, status=status.HTTP_200_OK)
+
+@extend_schema(
+    tags=["Reviews"],
+    responses={
+        200: OpenApiResponse(
+            response=UserReviewSerializer(many=True),
+            description="List of reviews made by the user."
+        ),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Authentication error, User not logged in"),
+        404: OpenApiResponse(description="Book not found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_reviews_by_user(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found, may need to login."}, status=status.HTTP_404_NOT_FOUND)
+
+    reviews = Review.objects.filter(user_profile=user_profile)
+    serializer = UserReviewSerializer(reviews, many=True)
+
+    return Response({
+        "message": f"Found {len(reviews)} reviews for the User.",
+        "reviews": serializer.data
+    }, status=status.HTTP_200_OK)

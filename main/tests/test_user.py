@@ -63,3 +63,106 @@ class UserProfileEndpointsTest(BaseTestCase):
         # print(profile_data["liked_books"])
         recently_liked_book = profile_data["liked_books"][-1]
         assert recently_liked_book["isbn13"] == "9783161484100"
+
+class ReviewEndpointTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.isbn = "9783161484100"
+        self.valid_review_data = {
+            "rating": 5,
+            "review": "This is a test review."
+        }
+
+    def test_create_review(self):
+        url = reverse("create-review", kwargs={"isbn": self.isbn})
+        response = self.user_client.post(url, self.valid_review_data)
+        assert response.status_code == 201
+        assert Review.objects.filter(user_profile=self.example_user_profile, book=self.example_book).exists()
+
+    def test_create_review_twice_should_fail(self):
+        Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
+        url = reverse("create-review", kwargs={"isbn": self.isbn})
+        response = self.user_client.post(url, self.valid_review_data)
+        assert response.status_code == 400
+        assert "already exists" in response.data["error"]
+
+    def test_create_review_with_invalid_rating(self):
+        url = reverse("create-review", kwargs={"isbn": self.isbn})
+        response = self.user_client.post(url, {"rating": 999, "review": "invalid"})
+        assert response.status_code == 400
+
+    def test_create_review_requires_auth(self):
+        unauth_client = Client()
+        url = reverse("create-review", kwargs={"isbn": self.isbn})
+        response = unauth_client.post(url, self.valid_review_data)
+        assert response.status_code in [401, 403]
+
+    def test_edit_review(self):
+        Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
+        url = reverse("edit-review", kwargs={"isbn": self.isbn})
+        updated_data = {"review": "Updated content", "rating": 4}
+        response = self.user_client.post(url, updated_data)
+        assert response.status_code == 200
+        updated_review = Review.objects.get(user_profile=self.example_user_profile, book=self.example_book)
+        assert updated_review.review == "Updated content"
+        assert updated_review.rating == 4
+
+    def test_edit_review_that_does_not_exist(self):
+        url = reverse("edit-review", kwargs={"isbn": self.isbn})
+        response = self.user_client.post(url, {"review": "nope", "rating": 3})
+        assert response.status_code == 404
+        assert "doesn't exist" in response.data["error"]
+
+    def test_edit_review_requires_auth(self):
+        unauth_client = Client()
+        url = reverse("edit-review", kwargs={"isbn": self.isbn})
+        response = unauth_client.post(url, {"review": "test", "rating": 5})
+        assert response.status_code in [401, 403]
+
+    def test_get_reviews_by_isbn(self):
+        Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
+        url = reverse("get-reviews-by-isbn", kwargs={"isbn": self.isbn})
+        response = self.user_client.get(url)
+        assert response.status_code == 200
+        assert "reviews" in response.data
+        assert len(response.data["reviews"]) == 1
+        assert response.data["reviews"][0]["review"] == self.valid_review_data["review"]
+        assert response.data["reviews"][0]["isbn13"] == self.isbn
+
+    def test_get_reviews_by_nonexistent_isbn(self):
+        url = reverse("get-reviews-by-isbn", kwargs={"isbn": "9999999999999"})
+        response = self.user_client.get(url)
+        assert response.status_code in [200, 404]
+
+    def test_get_reviews_by_isbn_requires_auth(self):
+        unauth_client = Client()
+        url = reverse("get-reviews-by-isbn", kwargs={"isbn": self.isbn})
+        response = unauth_client.get(url)
+        assert response.status_code in [401, 403]
+
+    def test_get_reviews_by_user(self):
+        Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
+        url = reverse("get-users-reviews")
+        response = self.user_client.get(url)
+        assert response.status_code == 200
+        assert "reviews" in response.data
+        assert len(response.data["reviews"]) == 1
+        assert response.data["reviews"][0]["review"] == self.valid_review_data["review"]
+        assert response.data["reviews"][0]["isbn13"] == self.isbn
+
+    def test_get_reviews_by_user_with_no_reviews(self):
+        new_user = User.objects.create_user(username="nouser", password="pass123")
+        UserProfile.objects.create(user=new_user)
+        client = Client()
+        client.login(username="nouser", password="pass123")
+        url = reverse("get-users-reviews")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "reviews" in response.data
+        assert len(response.data["reviews"]) == 0
+
+    def test_get_reviews_by_user_requires_auth(self):
+        unauth_client = Client()
+        url = reverse("get-users-reviews")
+        response = unauth_client.get(url)
+        assert response.status_code in [401, 403]

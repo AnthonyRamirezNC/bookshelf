@@ -32,6 +32,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ["bio", "display_name", "liked_books"]
 
+#Review
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ["id","rating", "review", "created_at"]
+
+class UserReviewSerializer(serializers.ModelSerializer):
+    isbn13 = serializers.SerializerMethodField()
+    class Meta:
+        model = Review
+        fields = ["id", "isbn13", "rating", "review", "created_at"]
+        
+    def get_isbn13(self, obj):
+        return obj.book.isbn13 if obj.book else None
+
 
 #external api serializers
 class ExtGenreSerializer(serializers.Serializer):
