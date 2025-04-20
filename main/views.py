@@ -263,31 +263,40 @@ def ExtGetBooksByAuthor(request, author):
         }
     )
 @api_view(["GET"])
-def ExtGetBooksByIsbn(request, isbn):
+def GetBooksByIsbn(request, isbn):
     isbn = isbn.replace("-", "")
     try:
-        url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
-        ext_response = requests.get(url)
-        ext_response_data = ext_response.json()
-        book_data_list = ext_response_data["items"]
-        #serialize each book in the book list
-        serialized_book_list = serialize_books_from_ext_response(book_data_list)
-        
+        book = Book.objects.get(isbn13=isbn)
+        serialized_book = BookSerializer(book).data
         return Response({
-            'message': f'Ext Call for ISBN: {isbn} Successful',
-            'num_books_returned' : len(serialized_book_list),
-            'books_returned' : serialized_book_list,
-            }, status=status.HTTP_200_OK)
-    except Exception as e:
-        if str(e) == "'items'":
+                'message': f'call for ISBN: {isbn} Successful',
+                'books_returned' : [serialized_book],
+                }, status=status.HTTP_200_OK)
+
+    except Book.DoesNotExist:
+        try:
+            url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=40&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+            ext_response = requests.get(url)
+            ext_response_data = ext_response.json()
+            book_data_list = ext_response_data["items"]
+            #serialize each book in the book list
+            serialized_book_list = serialize_books_from_ext_response(book_data_list)
+            
             return Response({
-            'message': f'Ext Call for ISBN: {isbn} Successful but no results returned',
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-            'message': "An internal error occured",
-            'error' : str(e),
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'message': f'call for ISBN: {isbn} Successful',
+                'num_books_returned' : len(serialized_book_list),
+                'books_returned' : serialized_book_list,
+                }, status=status.HTTP_200_OK)
+        except Exception as e:
+            if str(e) == "'items'":
+                return Response({
+                'message': f'Ext Call for ISBN: {isbn} Successful but no results returned',
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                'message': "An internal error occured",
+                'error' : str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #database views
 
