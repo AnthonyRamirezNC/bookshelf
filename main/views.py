@@ -406,12 +406,7 @@ def recommend_books(request):
     book_ids = build_recommendations(user)
     books = Book.objects.filter(id__in=book_ids)
 
-    data = [{
-        'title': book.title,
-        'authors': book.authors,
-        'genres' : book.genres,
-
-    } for book in books]
+    data = [{'isbn': book.isbn} for book in books]
 
 
     return JsonResponse({'recomendations': data})
