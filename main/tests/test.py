@@ -7,7 +7,7 @@ import uuid
 class BaseTestCase(TestCase):
     def setUp(self):
         #create example django user
-        self.example_user = User.objects.create(
+        self.example_user = User.objects.create_user(
             first_name = "John",
             last_name = "Doe",
             username = "john_doe",
@@ -18,7 +18,8 @@ class BaseTestCase(TestCase):
         #create a user profile
         self.example_user_profile = UserProfile.objects.create(
             user = self.example_user,
-            bio = "This is an example bio for John Doe"
+            bio = "This is an example bio for John Doe",
+            display_name = "johndoethebro"
         )
 
         # Create an authenticated client for the user with djangos default client
@@ -30,7 +31,7 @@ class BaseTestCase(TestCase):
             id=uuid.uuid4(),
             title="The Great Adventure",
             authors=["John Doe", "Jane Smith"],
-            isbn="978-3-16-148410-0",
+            isbn13="9783161484100",
             publication_date="2023-05-10",
             publisher="Epic Books Publishing",
             genres=["Adventure", "Fantasy"],

@@ -85,7 +85,7 @@
                         const bookCard = document.createElement("div");
                         bookCard.className = "book-card";
                         bookCard.innerHTML = `
-                            <img src="${book.image_url || '/static/images/default-book.png'}" alt="${book.title}">
+                            <img src="${book.img_src || '/static/images/default-book.png'}" alt="${book.title}">
                             <h3>${book.title}</h3>
                             <p>${book.author || 'Unknown Author'}</p>
                         `;

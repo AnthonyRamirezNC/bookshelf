@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from main.models import Book
+from main.models import *
 import uuid
 
 #book
@@ -11,7 +11,7 @@ class BookSerializer(serializers.Serializer):
         allow_empty=True,
         required=False
     )
-    isbn = serializers.CharField(max_length=20, allow_blank=True, required=False)
+    isbn13 = serializers.CharField(max_length=20, allow_blank=True, required=False)
     publication_date = serializers.DateField(required=False, allow_null=True)
     publisher = serializers.CharField(max_length=255, allow_blank=True, required=False)
 
@@ -22,6 +22,31 @@ class BookSerializer(serializers.Serializer):
     )
     language = serializers.CharField(max_length=50, allow_blank=True, required=False)
     page_count = serializers.IntegerField(required=False, allow_null=True)
+    img_src = serializers.CharField(allow_blank = True, required=False)
+
+#User Profile
+class UserProfileSerializer(serializers.ModelSerializer):
+    liked_books = BookSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ["bio", "display_name", "liked_books"]
+
+#Review
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ["id","rating", "review", "created_at"]
+
+class UserReviewSerializer(serializers.ModelSerializer):
+    isbn13 = serializers.SerializerMethodField()
+    class Meta:
+        model = Review
+        fields = ["id", "isbn13", "rating", "review", "created_at"]
+        
+    def get_isbn13(self, obj):
+        return obj.book.isbn13 if obj.book else None
+
 
 #external api serializers
 class ExtGenreSerializer(serializers.Serializer):
