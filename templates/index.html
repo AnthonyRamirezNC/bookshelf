@@ -35,7 +35,7 @@
                                 <a href="/book/${book.id}/">
                                     <img src="${book.img_src}" alt="${book.title}">
                                     <h3>${book.title}</h3>
-                                    <p>${book.author || 'Unknown Author'}</p>
+                                    <p>${book.authors || 'Unknown Author'}</p>
                                 </a>
                             `;
                             bookGrid.appendChild(bookCard);

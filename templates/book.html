@@ -50,7 +50,7 @@
       color: var(--muted);
       margin: 0 0 10px;
     }
-    .book-author {
+    .book-authors {
       font-size: 1.2em;
       color: var(--text1);
       margin: 0 0 20px;
@@ -70,7 +70,7 @@
     .book-meta div strong {
       color: var(--muted);
     }
-    /* Accordion */
+
     .accordion {
       margin-top: 30px;
       border-top: 1px solid var(--accent);
@@ -125,7 +125,7 @@
       color: var(--muted);
       margin: 0 0 5px;
     }
-    .card-author {
+    .card-authors {
       font-size: 0.9em;
       color: var(--text1);
       margin: 0;
@@ -140,7 +140,6 @@
 <body>
 
   <div class="container">
-    <!-- Book Detail -->
     <div class="book-detail">
       <div class="book-cover-container">
         <img id="book-cover" class="book-cover"
@@ -149,12 +148,12 @@
       </div>
       <div class="book-info">
         <h1 id="book-title" class="book-title">Loading title…</h1>
-        <h2 id="book-author" class="book-author">Loading author…</h2>
+        <h2 id="book-authors" class="book-authors">Loading author…</h2>
         <p id="book-description" class="book-description">
           Loading description…
         </p>
         <div class="book-meta">
-          <div><strong>Genre:</strong> <span id="book-genre">—</span></div>
+          <div><strong>Genre:</strong> <span id="book-genres">—</span></div>
           <div><strong>Language:</strong> <span id="book-language">—</span></div>
           <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
           <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
@@ -179,9 +178,9 @@
 
       const coverEl     = document.getElementById("book-cover");
       const titleEl     = document.getElementById("book-title");
-      const authorEl    = document.getElementById("book-author");
+      const authorEl    = document.getElementById("book-authors");
       const descEl      = document.getElementById("book-description");
-      const genreEl     = document.getElementById("book-genre");
+      const genreEl     = document.getElementById("book-genres");
       const langEl      = document.getElementById("book-language");
       const pagesEl     = document.getElementById("book-page-count");
       const publisherEl = document.getElementById("book-publisher");
@@ -196,9 +195,9 @@
         .then(book => {
           coverEl.src         = book.img_src || coverEl.src;
           titleEl.textContent = book.title  || "Unknown Title";
-          authorEl.textContent= book.author || "Unknown Author";
+          authorEl.textContent= book.authors || "Unknown Author";
           descEl.textContent  = book.description || "No description.";
-          genreEl.textContent = book.genre || "N/A";
+          genreEl.textContent = book.genres || "N/A";
           langEl.textContent  = book.language || "N/A";
           pagesEl.textContent = book.page_count || "N/A";
           publisherEl.textContent = book.publisher || "N/A";
@@ -230,7 +229,7 @@
                    alt="${b.title}">
               <div class="card-content">
                 <p class="card-title">${b.title}</p>
-                <p class="card-author">${b.author || ""}</p>
+                <p class="card-authors">${b.authors || ""}</p>
               </div>
             `;
             recGrid.appendChild(a);
