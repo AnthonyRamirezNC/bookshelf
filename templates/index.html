@@ -5,68 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bookshelf - Homepage</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/bulma.min.css' %}">
-    <style>
-        body {
-            background-color: #F9F3F0;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #F9F3F0;
-            border-bottom: 2px solid #CE796B;
-            padding: 20px;
-            text-align: center;
-        }
-        header img {
-            height: 175px;
-        }
-        .book-section {
-            margin: 20px;
-            padding: 20px;
-        }
-        .book-section h2 {
-            color: #717744;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .book-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px;
-        }
-        .book-card {
-            background-color: #FFFFFF;
-            border: 1px solid #CE796B;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .book-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-        }
-        .book-card h3 {
-            color: #5F758E;
-            font-size: 16px;
-            margin: 10px 0;
-        }
-        .book-card p {
-            color: #717744;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     <header>
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
     </header>
     <div class="book-section">
-        <h2>New Releases</h2>
+        <h2>Fiction & Classics</h2>
         <div class="book-grid" id="book-grid">
         </div>
     </div>
@@ -81,15 +27,19 @@
                 })
                 .then(data => {
                     const bookGrid = document.getElementById("book-grid");
-                    data.forEach(book => {
-                        const bookCard = document.createElement("div");
-                        bookCard.className = "book-card";
-                        bookCard.innerHTML = `
-                            <img src="${book.img_src || '/static/images/default-book.png'}" alt="${book.title}">
-                            <h3>${book.title}</h3>
-                            <p>${book.author || 'Unknown Author'}</p>
-                        `;
-                        bookGrid.appendChild(bookCard);
+                    data.slice(0, 10).forEach(book => {
+                        if (book.img_src) { 
+                            const bookCard = document.createElement("div");
+                            bookCard.className = "book-card";
+                            bookCard.innerHTML = `
+                                <a href="/book/${book.id}/">
+                                    <img src="${book.img_src}" alt="${book.title}">
+                                    <h3>${book.title}</h3>
+                                    <p>${book.author || 'Unknown Author'}</p>
+                                </a>
+                            `;
+                            bookGrid.appendChild(bookCard);
+                        }
                     });
                 })
                 .catch(error => {
