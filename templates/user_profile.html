@@ -1,3 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .profile-container {
+      margin: 40px auto;
+      max-width: 1000px;
+      padding: 20px;
+  }
+
+  .profile-card {
+      background-color: #FFFFFF;
+      border: 1px solid #CE796B;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .profile-name {
+      font-size: 28px;
+      color: #5F758E;
+  }
+
+  .profile-email {
+      font-size: 16px;
+      color: #888888;
+      margin-bottom: 20px;
+  }
+
+  .profile-bio {
+      margin-bottom: 30px;
+  }
+
+  .book-section {
+      margin-top: 30px;
+  }
+
+  .book-section h4 {
+      color: #717744;
+      font-size: 22px;
+      margin-bottom: 15px;
+  }
+
+  .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 20px;
+  }
+
+  .book-card {
+      background-color: #FFFFFF;
+      border: 1px solid #CE796B;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .book-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+  }
+
+  .book-card h3 {
+      color: #5F758E;
+      font-size: 16px;
+      margin: 10px 0;
+  }
+
+  .book-card p {
+      color: #717744;
+      font-size: 14px;
+      margin: 0;
+  }
+  
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="profile-container">
   <div class="profile-card">
@@ -11,22 +92,45 @@
       </div>
     {% endif %}
 
-    {% if profile.liked_books.all %}
-      <div class="liked-books">
-        <h4>Liked Books</h4>
-        <ul>
+    <div class="book-section">
+      <h4>Liked Books</h4>
+      {% if profile.liked_books.all %}
+        <div class="book-grid">
           {% for book in profile.liked_books.all %}
-            <li>
-              <strong>{{ book.title }}</strong>
-              {% if book.author %} by {{ book.author }}{% endif %}
-              {% if book.rating %} – Rating: {{ book.rating }}{% endif %}
-            </li>
+            <div class="book-card">
+              <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
+              <h3>{{ book.title }}</h3>
+              <p>{{ book.author|default:'Unknown Author' }}</p>
+            </div>
           {% endfor %}
-        </ul>
-      </div>
-    {% else %}
-      <p>No liked books yet.</p>
-    {% endif %}
+        </div>
+      {% else %}
+        <p>No liked books yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="book-section">
+      <h4>Reviewed Books</h4>
+      {% if profile.review_set.all %}
+        <div class="book-grid">
+          {% for review in profile.review_set.all %}
+            <div class="book-card">
+              <img src="{{ review.book.img_src|default:'/static/images/default-book.png' }}" alt="{{ review.book.title }}">
+              <h3>{{ review.book.title }}</h3>
+              <p>{{ review.book.author|default:'Unknown Author' }}</p>
+              {% if review.rating %}
+                <p>Rating: {{ review.rating }}/5</p>
+              {% endif %}
+              {% if review.review %}
+                <p>{{ review.review|truncatewords:20 }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No reviewed books yet.</p>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
