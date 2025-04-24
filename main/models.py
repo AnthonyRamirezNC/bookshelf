@@ -43,7 +43,7 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "api_book"
+        db_table = "api_review"
 
 class BookInteraction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
