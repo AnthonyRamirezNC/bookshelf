@@ -143,17 +143,7 @@ def create_book_item(isbn):
         return None
 
     book_data_list = ext_response_data["items"]
-    serialized_books = serialize_books_from_ext_response(book_data_list)
-
-    if not serialized_books:
-        return None
-
-    book_data = serialized_books[0]
-    try:
-        book = Book.objects.create(**book_data)
-        return book
-    except Exception as e:
-        return None
+    serialize_books_from_ext_response(book_data_list)
 
 #external api views
 
@@ -427,10 +417,12 @@ def recommend_books(request):
     book_ids = build_recommendations(user)
     books = Book.objects.filter(id__in=book_ids)
 
-    data = [{'isbn': book.isbn} for book in books]
-
-
-    return JsonResponse({'recomendations': data})
+    serializer = BookSerializer(books, many=True)
+    return Response({
+        "message" : "Recommendation Successful",
+        "Recommendations" : serializer.data
+    })
+        
 
 #User Profile endpoints
 
@@ -494,13 +486,7 @@ def like_book_with_isbn(request, isbn):
 
         if not serialized_books:
             return Response({"error": "Failed to process external book data"}, status=400)
-
-        book_data = serialized_books[0]
-        try:
-            book = Book.objects.create(**book_data)
-        except Exception as e:
-            return Response({"error": f"Failed to create book: {str(e)}"}, status=500)
-
+    book = Book.objects.get(isbn13=isbn)
     # Add book to liked_books
     user_profile = UserProfile.objects.get(user=request.user)
     user_profile.liked_books.add(book)
