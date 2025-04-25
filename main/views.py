@@ -45,7 +45,8 @@ def add_book_to_db(serialized_book):
             genres=serialized_book.get("genres", []),
             language=serialized_book.get("language"),
             page_count=serialized_book.get("page_count"),
-            img_src=serialized_book.get("img_src")
+            img_src=serialized_book.get("img_src"),
+            description=serialized_book.get("description"),
         ) 
 
 def check_if_book_in_db(serialized_book):
@@ -104,6 +105,10 @@ def serialize_books_from_ext_response(book_data_list):
             title = book_info.get("title")[:255]
         else: title = book_info.get("title")
 
+        if(len(book_info.get("description", "")) > 1000):
+            description = book_info.get("description")[:1000]
+        else: description = book_info.get("description", "No Description Provided")
+
         if(src_link is None):
             #Cover image not found
             src_link = "Missing"
@@ -117,10 +122,12 @@ def serialize_books_from_ext_response(book_data_list):
             "language": book_info.get("language"),
             "page_count": book_info.get("pageCount"),
             "isbn13" : isbn,
-            "img_src" : src_link
+            "img_src" : src_link,
+            "description" : description
         })
         if book_serialized.is_valid():
             serialized_book_list.append(book_serialized.data)
+            add_book_to_db(book_serialized.validated_data)
         else: 
             print("could not serialize book because: \n")
             print(book_serialized.errors)
@@ -166,7 +173,13 @@ def ExtGetBooksByTitle(request, title):
         ext_response_data = ext_response.json()
         book_data_list = ext_response_data["items"]
         #serialize each book in the book list
-        serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        try:
+            serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        except Exception as e:
+            return Response({
+            'message': "An internal error occured",
+            'error' : str(e),
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({
             'message': f'Ext Call for title: {title} Successful',
             'num_books_returned' : len(serialized_book_list),
@@ -237,6 +250,7 @@ def ExtGetBooksByAuthor(request, author):
         book_data_list = ext_response_data["items"]
         #serialize each book in the book list
         serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        
         
         return Response({
             'message': f'Ext Call for Author: {author} Successful',
