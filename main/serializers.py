@@ -23,6 +23,8 @@ class BookSerializer(serializers.Serializer):
     language = serializers.CharField(max_length=50, allow_blank=True, required=False)
     page_count = serializers.IntegerField(required=False, allow_null=True)
     img_src = serializers.CharField(allow_blank = True, required=False)
+    description = serializers.CharField(allow_blank = True, required=False, allow_null=True)
+
 
 #User Profile
 class UserProfileSerializer(serializers.ModelSerializer):

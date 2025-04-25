@@ -15,6 +15,8 @@ class Book(models.Model):
     page_count = models.IntegerField(blank=True, null=True)
     img_src = models.CharField(max_length=255, default="Missing", blank=True, null=True)
     average_rating = models.FloatField(null=True, blank=True)
+    description = models.CharField(max_length=1000, blank=True, null=True)
+
     class Meta:
         db_table = "api_book"
 
@@ -43,15 +45,5 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "api_book"
-
-class BookInteraction(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    liked = models.BooleanField(default=False)
-    rating = models.IntegerField(null=True, blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'book')
-
+        unique_together = ('user_profile', 'book')
+        db_table = "api_review"
