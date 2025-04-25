@@ -324,6 +324,8 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            #create user profile object
+            UserProfile.objects.create(user=user)
             return redirect("/")
     else:
         form = CustomUserCreationForm()
