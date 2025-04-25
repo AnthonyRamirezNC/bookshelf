@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .recommender import build_recommendations
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from .serializers import *
@@ -10,9 +11,9 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.decorators import login_required
-
 import requests
 import os
 import pyisbn
@@ -45,7 +46,8 @@ def add_book_to_db(serialized_book):
             genres=serialized_book.get("genres", []),
             language=serialized_book.get("language"),
             page_count=serialized_book.get("page_count"),
-            img_src=serialized_book.get("img_src")
+            img_src=serialized_book.get("img_src"),
+            description=serialized_book.get("description"),
         ) 
 
 def check_if_book_in_db(serialized_book):
@@ -104,6 +106,10 @@ def serialize_books_from_ext_response(book_data_list):
             title = book_info.get("title")[:255]
         else: title = book_info.get("title")
 
+        if(len(book_info.get("description", "")) > 1000):
+            description = book_info.get("description")[:1000]
+        else: description = book_info.get("description", "No Description Provided")
+
         if(src_link is None):
             #Cover image not found
             src_link = "Missing"
@@ -117,10 +123,12 @@ def serialize_books_from_ext_response(book_data_list):
             "language": book_info.get("language"),
             "page_count": book_info.get("pageCount"),
             "isbn13" : isbn,
-            "img_src" : src_link
+            "img_src" : src_link,
+            "description" : description
         })
         if book_serialized.is_valid():
             serialized_book_list.append(book_serialized.data)
+            add_book_to_db(book_serialized.validated_data)
         else: 
             print("could not serialize book because: \n")
             print(book_serialized.errors)
@@ -135,17 +143,7 @@ def create_book_item(isbn):
         return None
 
     book_data_list = ext_response_data["items"]
-    serialized_books = serialize_books_from_ext_response(book_data_list)
-
-    if not serialized_books:
-        return None
-
-    book_data = serialized_books[0]
-    try:
-        book = Book.objects.create(**book_data)
-        return book
-    except Exception as e:
-        return None
+    serialize_books_from_ext_response(book_data_list)
 
 #external api views
 
@@ -166,7 +164,13 @@ def ExtGetBooksByTitle(request, title):
         ext_response_data = ext_response.json()
         book_data_list = ext_response_data["items"]
         #serialize each book in the book list
-        serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        try:
+            serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        except Exception as e:
+            return Response({
+            'message': "An internal error occured",
+            'error' : str(e),
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({
             'message': f'Ext Call for title: {title} Successful',
             'num_books_returned' : len(serialized_book_list),
@@ -237,6 +241,7 @@ def ExtGetBooksByAuthor(request, author):
         book_data_list = ext_response_data["items"]
         #serialize each book in the book list
         serialized_book_list = serialize_books_from_ext_response(book_data_list)
+        
         
         return Response({
             'message': f'Ext Call for Author: {author} Successful',
@@ -319,6 +324,8 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            #create user profile object
+            UserProfile.objects.create(user=user)
             return redirect("/")
     else:
         form = CustomUserCreationForm()
@@ -405,6 +412,19 @@ class BookDetailView(APIView):
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+@login_required
+@api_view(['GET'])
+def recommend_books(request):
+    user = request.user
+    book_ids = build_recommendations(user)
+    books = Book.objects.filter(id__in=book_ids)
+
+    serializer = BookSerializer(books, many=True)
+    return Response({
+        "message" : "Recommendation Successful",
+        "Recommendations" : serializer.data
+    })
+        
 
 #User Profile endpoints
 
@@ -468,13 +488,7 @@ def like_book_with_isbn(request, isbn):
 
         if not serialized_books:
             return Response({"error": "Failed to process external book data"}, status=400)
-
-        book_data = serialized_books[0]
-        try:
-            book = Book.objects.create(**book_data)
-        except Exception as e:
-            return Response({"error": f"Failed to create book: {str(e)}"}, status=500)
-
+    book = Book.objects.get(isbn13=isbn)
     # Add book to liked_books
     user_profile = UserProfile.objects.get(user=request.user)
     user_profile.liked_books.add(book)
