@@ -9,42 +9,75 @@
 </head>
 <body>
     <header>
+    <a href="/">
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
-    </header>
+    </a>
+</header>
     <div class="book-section">
         <h2>Fiction & Classics</h2>
         <div class="book-grid" id="book-grid">
         </div>
+        <button id="load-more" class="load-more-btn">Load More</button>
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            fetch("/books/") 
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch books");
+            let currentIndex = 0;
+            const booksPerPage = 10;
+            let allBooks = []; 
+            const loadMoreButton = document.getElementById("load-more");
+
+            function renderBooks() {
+                const bookGrid = document.getElementById("book-grid");
+                const booksToLoad = allBooks.slice(currentIndex, currentIndex + booksPerPage);
+                booksToLoad.forEach(book => {
+                    if (book.img_src) { 
+                        const bookCard = document.createElement("div");
+                        bookCard.className = "book-card";
+                        bookCard.innerHTML = `
+                            <a href="/book/${book.id}/">
+                                <img src="${book.img_src}" alt="${book.title}">
+                                <h3>${book.title}</h3>
+                                <p>${book.authors || 'Unknown Author'}</p>
+                            </a>
+                        `;
+                        bookGrid.appendChild(bookCard);
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    const bookGrid = document.getElementById("book-grid");
-                    data.slice(0, 10).forEach(book => {
-                        if (book.img_src) { 
-                            const bookCard = document.createElement("div");
-                            bookCard.className = "book-card";
-                            bookCard.innerHTML = `
-                                <a href="/book/${book.id}/">
-                                    <img src="${book.img_src}" alt="${book.title}">
-                                    <h3>${book.title}</h3>
-                                    <p>${book.authors || 'Unknown Author'}</p>
-                                </a>
-                            `;
-                            bookGrid.appendChild(bookCard);
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching books:", error);
                 });
+                currentIndex += booksPerPage;
+
+                if (currentIndex >= allBooks.length) {
+                    loadMoreButton.style.display = "none";
+                }
+            }
+
+            function loadBooks() {
+                loadMoreButton.disabled = true; 
+                fetch("/books/")
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Failed to fetch books");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        allBooks = data;
+                        renderBooks(); 
+                    })
+                    .catch(error => {
+                        console.error("Error fetching books:", error);
+                    })
+                    .finally(() => {
+                        loadMoreButton.disabled = false; 
+                    });
+            }
+
+            loadBooks();
+
+            loadMoreButton.addEventListener("click", function () {
+                loadMoreButton.disabled = true; 
+                renderBooks();
+                loadMoreButton.disabled = false; 
+            });
         });
     </script>
 </body>

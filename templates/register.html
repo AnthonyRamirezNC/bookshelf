@@ -1,10 +1,29 @@
-{% extends "base.html" %}
-
-{% block content %}
-  <h2>Register</h2>
-  <form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-  </form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Bookshelf</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <header>
+    <a href="/">
+        <img src="/static/images/logo.svg" alt="Bookshelf Logo">
+    </a>
+</header>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Create an Account</h2>
+            <p class="form-description">Join us to explore and manage your bookshelf.</p>
+            <form method="post" class="form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="login-btn">Register</button>
+            </form>
+            <p class="form-footer">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+        </div>
+    </div>
+</body>
+</html>
