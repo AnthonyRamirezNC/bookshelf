@@ -1,7 +1,6 @@
 from django.urls import reverse
 import os
 import requests
-from main.models import Book
 from main.views import add_book_to_db
 
 def addBooksByLetter():
