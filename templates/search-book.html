@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Book Details</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <header>
+    <a href="/">Back to Home</a>
+  </header>
+  <main>
+    <div class="book-detail">
+      <img id="book-cover" class="book-cover" src="/static/images/default-book.png" alt="Book Cover">
+      <h1 id="book-title" class="book-title">Loading title…</h1>
+      <h2 id="book-authors" class="book-authors">Loading author…</h2>
+      <p id="book-description" class="book-description">Loading description…</p>
+      <div class="book-meta">
+        <div><strong>Genre:</strong> <span id="book-genres">—</span></div>
+        <div><strong>Language:</strong> <span id="book-language">—</span></div>
+        <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
+        <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
+        <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const params = new URLSearchParams(window.location.search);
+      const book = Object.fromEntries(params.entries());
+
+      document.getElementById("book-cover").src = book.img_src || "/static/images/default-book.png";
+      document.getElementById("book-title").textContent = book.title || "Unknown Title";
+      document.getElementById("book-authors").textContent = book.authors || "Unknown Author";
+      document.getElementById("book-description").textContent = book.description || "No description.";
+      document.getElementById("book-genres").textContent = book.genres || "N/A";
+      document.getElementById("book-language").textContent = book.language || "N/A";
+      document.getElementById("book-page-count").textContent = book.page_count || "N/A";
+      document.getElementById("book-publisher").textContent = book.publisher || "N/A";
+      document.getElementById("book-publication-date").textContent = book.publication_date || "N/A";
+    });
+  </script>
+</body>
+</html>

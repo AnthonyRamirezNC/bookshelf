@@ -28,6 +28,9 @@ def home(request):
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
+def search_book(request):
+    return render(request, "search_book.html")
+
 @login_required(login_url='/login/')
 def profile(request):
     user_profile = UserProfile.objects.get(user=request.user) 

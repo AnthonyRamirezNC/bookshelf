@@ -12,6 +12,35 @@
     <a href="/">
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
     </a>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="/genre/fiction/">Fiction</a></li>
+            <li><a href="/genre/classics/">Classics</a></li>
+            <li><a href="/genre/scifi/">Sci-Fi</a></li>
+            <li><a href="/genre/fantasy/">Fantasy</a></li>
+            <li><a href="/genre/mystery/">Mystery</a></li>
+            <li><a href="/genre/romance/">Romance</a></li>
+            <li><a href="/genre/horror/">Horror</a></li>
+            <li><a href="/genre/biography/">Biography</a></li>
+            <li><a href="/genre/history/">History</a></li>
+            <li><a href="/genre/poetry/">Poetry</a></li>
+        </ul>
+        <div class="nav-actions">
+            <form action="/books/search-title/" method="get" class="search-form">
+                <input type="text" name="title" placeholder="Search books..." required>
+                <button type="submit">Search</button>
+            </form>
+            <div class="auth-links">
+                {% if user.is_authenticated %}
+                    <a href="/profile/">Profile</a>
+                    <a href="/logout/">Logout</a>
+                {% else %}
+                    <a href="/login/">Login</a>
+                    <a href="/register/">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 </header>
     <div class="book-section">
         <h2>Fiction & Classics</h2>
@@ -20,39 +49,83 @@
         <button id="load-more" class="load-more-btn">Load More</button>
     </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let currentIndex = 0;
-            const booksPerPage = 10;
-            let allBooks = []; 
-            const loadMoreButton = document.getElementById("load-more");
+    document.addEventListener("DOMContentLoaded", function () {
+        let currentIndex = 0;
+        const booksPerPage = 10;
+        let allBooks = [];
+        const bookGrid = document.getElementById("book-grid");
+        const loadMoreButton = document.getElementById("load-more");
+        const searchForm = document.querySelector(".search-form");
+        const searchInput = searchForm.querySelector("input[name='title']");
 
-            function renderBooks() {
-                const bookGrid = document.getElementById("book-grid");
-                const booksToLoad = allBooks.slice(currentIndex, currentIndex + booksPerPage);
-                booksToLoad.forEach(book => {
-                    if (book.img_src) { 
-                        const bookCard = document.createElement("div");
-                        bookCard.className = "book-card";
-                        bookCard.innerHTML = `
-                            <a href="/book/${book.id}/">
-                                <img src="${book.img_src}" alt="${book.title}">
-                                <h3>${book.title}</h3>
-                                <p>${book.authors || 'Unknown Author'}</p>
-                            </a>
-                        `;
-                        bookGrid.appendChild(bookCard);
-                    }
-                });
-                currentIndex += booksPerPage;
-
-                if (currentIndex >= allBooks.length) {
-                    loadMoreButton.style.display = "none";
-                }
+        function renderBooks(books) {
+            if (!Array.isArray(books)) {
+                console.error("Invalid data format: Expected an array of books.");
+                return;
             }
+            const booksToLoad = books.slice(currentIndex, currentIndex + booksPerPage);
+            booksToLoad.forEach(book => {
+                if (book.img_src) {
+                    const bookCard = document.createElement("div");
+                    bookCard.className = "book-card";
+                    bookCard.innerHTML = `
+                        <div>
+                            <img src="${book.img_src}" alt="${book.title}">
+                            <h3>${book.title}</h3>
+                            <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
+                        </div>
+                    `;
+                    bookCard.addEventListener("click", function () {
+                        if (book.id) {
+                            window.location.href = `/book/${book.id}/`;
+                        } else {
+                            const queryParams = new URLSearchParams(book).toString();
+                            window.location.href = `/search-book/?${queryParams}`;
+                        }
+                    });
+                    bookGrid.appendChild(bookCard);
+                }
+            });
+            currentIndex += booksPerPage;
 
-            function loadBooks() {
-                loadMoreButton.disabled = true; 
-                fetch("/books/")
+            if (currentIndex >= books.length) {
+                loadMoreButton.style.display = "none";
+            } else {
+                loadMoreButton.style.display = "block";
+            }
+        }
+
+        function loadBooks() {
+            loadMoreButton.disabled = true;
+            fetch("/books/")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch books");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!Array.isArray(data)) {
+                        throw new Error("Invalid response format: Expected an array of books.");
+                    }
+                    allBooks = data;
+                    currentIndex = 0;
+                    bookGrid.innerHTML = "";
+                    renderBooks(allBooks);
+                })
+                .catch(error => {
+                    console.error("Error fetching books:", error);
+                })
+                .finally(() => {
+                    loadMoreButton.disabled = false;
+                });
+        }
+
+        searchForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const title = searchInput.value.trim();
+            if (title) {
+                fetch(`/ext/books/search-title/${title}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error("Failed to fetch books");
@@ -60,25 +133,36 @@
                         return response.json();
                     })
                     .then(data => {
-                        allBooks = data;
-                        renderBooks(); 
+                        if (!data.books_returned || !Array.isArray(data.books_returned)) {
+                            throw new Error("Invalid response format: Expected an array of books in 'books_returned'.");
+                        }
+                        currentIndex = 0;
+                        bookGrid.innerHTML = "";
+                        if (data.books_returned.length === 0) {
+                            bookGrid.innerHTML = "<p>No books found.</p>";
+                            loadMoreButton.style.display = "none";
+                        } else {
+                            renderBooks(data.books_returned);
+                        }
                     })
                     .catch(error => {
                         console.error("Error fetching books:", error);
-                    })
-                    .finally(() => {
-                        loadMoreButton.disabled = false; 
+                        bookGrid.innerHTML = "<p>Error fetching books. Please try again later.</p>";
+                        loadMoreButton.style.display = "none";
                     });
+            } else {
+                loadBooks();
             }
-
-            loadBooks();
-
-            loadMoreButton.addEventListener("click", function () {
-                loadMoreButton.disabled = true; 
-                renderBooks();
-                loadMoreButton.disabled = false; 
-            });
         });
-    </script>
+
+        loadMoreButton.addEventListener("click", function () {
+            loadMoreButton.disabled = true;
+            renderBooks(allBooks);
+            loadMoreButton.disabled = false;
+        });
+
+        loadBooks();
+    });
+</script>
 </body>
 </html>
