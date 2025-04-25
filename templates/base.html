@@ -7,12 +7,9 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Bookshelf</h1>
-        <nav>
-            <a href="{% url 'home' %}">Home</a> |
-            <a href="{% url 'login' %}">Login</a> |
-            <a href="{% url 'register' %}">Register</a>
-        </nav>
+        <a href="/">
+            <img src="/static/images/logo.svg" alt="Bookshelf Logo">
+        </a>
     </header>
     <main>
         {% block content %}{% endblock %}

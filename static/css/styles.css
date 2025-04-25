@@ -50,3 +50,114 @@ header img {
     color: #717744;
     font-size: 14px;
 }
+.login-box .login-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.load-more-btn {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.load-more-btn:hover {
+    background-color: #A65A4A;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    background-color: #F9F3F0;
+}
+
+.login-box {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-box h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.login-box p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.login-box form {
+    display: flex;
+    flex-direction: column;
+    text-align: left; 
+}
+
+.login-box form label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.login-box form input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #CE796B;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.login-box form input:focus {
+    border-color: #CE796B; 
+    outline: none;
+}
+
+ul.errorlist {
+    margin: 0 0 10px 0;
+    padding: 0;
+    list-style: none;
+    color: #CE796B; 
+    font-size: 13px;
+}
+
+.login-box .form-footer {
+    font-size: 14px;
+    color: #666;
+    margin-top: 15px;
+    text-align: center; 
+}
+
+.login-box .form-footer a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+.login-box .form-footer a:hover {
+    text-decoration: underline;
+}
+
+.login-box form .helptext {
+    display: none;
+}
