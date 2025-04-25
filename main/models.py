@@ -15,6 +15,8 @@ class Book(models.Model):
     page_count = models.IntegerField(blank=True, null=True)
     img_src = models.CharField(max_length=255, default="Missing", blank=True, null=True)
     average_rating = models.FloatField(null=True, blank=True)
+    description = models.CharField(max_length=1000, blank=True, null=True)
+
     class Meta:
         db_table = "api_book"
 
@@ -43,4 +45,5 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user_profile', 'book') #limit to 1 per user profile
+        unique_together = ('user_profile', 'book')
+        db_table = "api_review"
