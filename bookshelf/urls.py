@@ -65,4 +65,7 @@ urlpatterns = [
     path("ext/books/search-isbn/<str:isbn>", GetBooksByIsbn, name="ext-books-by-isbn"),
 
     path("book/<str:book_id>/", book_detail, name="book-detail"),
+
+    #recommendations
+    path("recommendations/", recommend_books, name="recommend-books"),
 ]
