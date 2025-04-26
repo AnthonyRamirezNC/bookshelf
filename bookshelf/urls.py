@@ -64,6 +64,7 @@ urlpatterns = [
     path("ext/books/search-genre/<str:genre>", ExtGetBooksByGenre, name="ext-books-by-genre"),
     path("ext/books/search-author/<str:author>", ExtGetBooksByAuthor, name="ext-books-by-author"),
     path("ext/books/search-isbn/<str:isbn>", GetBooksByIsbn, name="ext-books-by-isbn"),
+    path("ext/books/get-rating/<str:isbn>", GetRatingByIsbn, name="get-rating-with-isbn"),
 
     path("book/<str:book_id>/", book_detail, name="book-detail"),
 
