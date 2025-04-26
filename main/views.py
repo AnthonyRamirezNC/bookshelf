@@ -30,7 +30,19 @@ def book_detail(request, book_id):
 
 @login_required(login_url='/login/')
 def profile(request):
-    user_profile = UserProfile.objects.get(user=request.user) 
+    try:
+        user_profile = UserProfile.objects.get(user=request.user) 
+    except UserProfile.DoesNotExist:
+        # create and assign the created object
+        user_profile = UserProfile.objects.create(
+            user=request.user,
+            bio="New Bio",
+            display_name=request.user.username
+        )
+        serializer = UserProfileSerializer(data=user_profile)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+    
     return render(request, "user_profile.html", {"profile": user_profile})
 
 #helper methods
@@ -325,7 +337,7 @@ def register(request):
             user = form.save()
             login(request, user)
             #create user profile object
-            UserProfile.objects.create(user=user)
+            UserProfile.objects.create(user=user, bio="Test Bio", display_name=user.username)
             return redirect("/")
     else:
         form = CustomUserCreationForm()
@@ -429,6 +441,7 @@ def recommend_books(request):
 #User Profile endpoints
 
 #get User Profile based on user
+@login_required
 @extend_schema(
 tags=["User Profile"],
 responses= {
@@ -450,9 +463,22 @@ def get_users_profile(request):
         "profile_data" : serialized_profile.data
         })
     except UserProfile.DoesNotExist:
-        return Response({"error": "User Profile not found"}, status=404)
+        # create and assign the created object
+        user_profile = UserProfile.objects.create(
+            user=request.user,
+            bio="New Bio",
+            display_name=request.user.username
+        )
+        serializer = UserProfileSerializer(data=user_profile)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+        
+        return Response({
+            "message": "User Profile Created and Found",
+            "profile_data": serialized_profile.data
+        })
 
-
+@login_required
 @extend_schema(
 tags=["User Profile"],
 responses= {
@@ -495,6 +521,7 @@ def like_book_with_isbn(request, isbn):
 
     return Response({"message": "Book liked!"})
 
+@login_required
 @extend_schema(
 tags=["User Profile"],
 request = UserProfileSerializer, #request serializer to show in docs
@@ -561,6 +588,7 @@ def create_user_profile(request):
 #Review Endpoints
 
 #create review
+@login_required
 @extend_schema(
     tags=["Reviews"],
     request=ReviewSerializer,
@@ -603,6 +631,7 @@ def create_review_with_isbn(request, isbn):
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@login_required
 @extend_schema(
     tags=["Reviews"],
     request=ReviewSerializer,
@@ -684,6 +713,7 @@ def get_all_reviews_by_isbn(request, isbn):
         "reviews": review_list
     }, status=status.HTTP_200_OK)
 
+@login_required
 @extend_schema(
     tags=["Reviews"],
     responses={
