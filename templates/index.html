@@ -32,8 +32,8 @@
             </form>
             <div class="auth-links">
                 {% if user.is_authenticated %}
-                    <a href="/profile/">Profile</a>
-                    <a href="/logout/">Logout</a>
+                    <a href="/user/profile">Profile</a>
+                    <a href="/logout">Logout</a>
                 {% else %}
                     <a href="/login/">Login</a>
                     <a href="/register/">Register</a>
