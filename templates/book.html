@@ -1,93 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Details</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #F9F3F0;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #FFFFFF;
-            border: 1px solid #CE796B;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .book-title {
-            font-size: 28px;
-            color: #717744;
-            margin-bottom: 10px;
-        }
-        .book-author {
-            font-size: 18px;
-            color: #5F758E;
-            margin-bottom: 20px;
-        }
-        .book-description {
-            font-size: 16px;
-            color: #333333;
-            margin-bottom: 20px;
-        }
-        .book-details {
-            font-size: 14px;
-            color: #5F758E;
-        }
-        .book-cover {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book Details</title>
+  <style>
+    :root {
+      --bg:      #F9F3F0;
+      --accent:  #CE796B;
+      --muted:   #717744;
+      --text1:   #5F758E;
+      --text2:   #333333;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text2);
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .book-detail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .book-cover-container {
+      flex: 1 1 200px;
+    }
+    .book-cover {
+      width: 100%;
+      display: block;
+      border-radius: 5px;
+    }
+    .book-info {
+      flex: 2 1 300px;
+    }
+    .book-title {
+      font-size: 2em;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+    .book-authors {
+      font-size: 1.2em;
+      color: var(--text1);
+      margin: 0 0 20px;
+    }
+    .book-description {
+      font-size: 1em;
+      line-height: 1.5;
+      margin: 0 0 20px;
+    }
+    .book-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.9em;
+      color: var(--text1);
+    }
+    .book-meta div strong {
+      color: var(--muted);
+    }
+
+    .accordion {
+      margin-top: 30px;
+      border-top: 1px solid var(--accent);
+      padding-top: 20px;
+    }
+    .accordion summary {
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--muted);
+      list-style: none;
+    }
+    .accordion summary::-webkit-details-marker {
+      display: none;
+    }
+    .accordion summary:before {
+      content: "▶";
+      display: inline-block;
+      margin-right: 8px;
+      transition: transform 0.2s;
+    }
+    .accordion[open] summary:before {
+      transform: rotate(90deg);
+    }
+    .cards-grid {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+      gap: 15px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+    }
+    .card img {
+      width: 100%;
+      display: block;
+    }
+    .card-content {
+      padding: 10px;
+      flex-grow: 1;
+    }
+    .card-title {
+      font-size: 1em;
+      color: var(--muted);
+      margin: 0 0 5px;
+    }
+    .card-authors {
+      font-size: 0.9em;
+      color: var(--text1);
+      margin: 0;
+    }
+    @media (max-width: 600px) {
+      .book-detail {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <img id="book-cover" class="book-cover" src="" alt="Book Cover">
-        <h1 id="book-title" class="book-title">Book Title</h1>
-        <h2 id="book-author" class="book-author">Author: Unknown</h2>
-        <p id="book-description" class="book-description">Description not available.</p>
-        <div id="book-details" class="book-details">
-            <p><strong>Genre:</strong> <span id="book-genre">N/A</span></p>
-            <p><strong>Language:</strong> <span id="book-language">N/A</span></p>
-            <p><strong>Page Count:</strong> <span id="book-page-count">N/A</span></p>
-            <p><strong>Publisher:</strong> <span id="book-publisher">N/A</span></p>
-            <p><strong>Publication Date:</strong> <span id="book-publication-date">N/A</span></p>
+
+  <div class="container">
+    <div class="book-detail">
+      <div class="book-cover-container">
+        <img id="book-cover" class="book-cover"
+             src="/static/images/default-book.png"
+             alt="Book Cover">
+      </div>
+      <div class="book-info">
+        <h1 id="book-title" class="book-title">Loading title…</h1>
+        <h2 id="book-authors" class="book-authors">Loading author…</h2>
+        <p id="book-description" class="book-description">
+          Loading description…
+        </p>
+        <div class="book-meta">
+          <div><strong>Genre:</strong> <span id="book-genres">—</span></div>
+          <div><strong>Language:</strong> <span id="book-language">—</span></div>
+          <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
+          <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
+          <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
         </div>
+      </div>
     </div>
 
-    <script>
-  
-        document.addEventListener("DOMContentLoaded", function () {
-            const bookId = "_ojXNuzgHRcC"; 
-            fetch(`/books/${bookId}/`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch book details");
-                    }
-                    return response.json();
-                })
-                .then(book => {
-                    document.getElementById("book-cover").src = book.image_url || "/static/images/default-book.png";
-                    document.getElementById("book-title").textContent = book.title || "Unknown Title";
-                    document.getElementById("book-author").textContent = `Author: ${book.author || "Unknown"}`;
-                    document.getElementById("book-description").textContent = book.description || "Description not available.";
-                    document.getElementById("book-genre").textContent = book.genre || "N/A";
-                    document.getElementById("book-language").textContent = book.language || "N/A";
-                    document.getElementById("book-page-count").textContent = book.page_count || "N/A";
-                    document.getElementById("book-publisher").textContent = book.publisher || "N/A";
-                    document.getElementById("book-publication-date").textContent = book.publication_date || "N/A";
-                })
-                .catch(error => {
-                    console.error("Error fetching book details:", error);
-                });
+    <div class="accordion">
+      <details open>
+        <summary>More in this Genre</summary>
+        <div id="recommendation-grid" class="cards-grid">
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const parts = window.location.pathname.split("/").filter(p => p);
+      const bookId = parts[parts.length - 1];
+
+      const coverEl     = document.getElementById("book-cover");
+      const titleEl     = document.getElementById("book-title");
+      const authorEl    = document.getElementById("book-authors");
+      const descEl      = document.getElementById("book-description");
+      const genreEl     = document.getElementById("book-genres");
+      const langEl      = document.getElementById("book-language");
+      const pagesEl     = document.getElementById("book-page-count");
+      const publisherEl = document.getElementById("book-publisher");
+      const pubDateEl   = document.getElementById("book-publication-date");
+      const recGrid     = document.getElementById("recommendation-grid");
+
+      fetch(`/books/${bookId}/`)
+        .then(r => {
+          if (!r.ok) throw new Error("Failed to fetch book");
+          return r.json();
+        })
+        .then(book => {
+          coverEl.src         = book.img_src || coverEl.src;
+          titleEl.textContent = book.title  || "Unknown Title";
+          authorEl.textContent= book.authors || "Unknown Author";
+          descEl.textContent  = book.description || "No description.";
+          genreEl.textContent = book.genres || "N/A";
+          langEl.textContent  = book.language || "N/A";
+          pagesEl.textContent = book.page_count || "N/A";
+          publisherEl.textContent = book.publisher || "N/A";
+          pubDateEl.textContent   = book.publication_date || "N/A";
+
+          if (!book.genre) throw new Error("No genre specified");
+          return fetch(
+            `/ext/books/search-genre/${encodeURIComponent(book.genre)}/`
+          );
+        })
+        .then(r => r.ok ? r.json() : Promise.reject("Rec fetch failed"))
+        .then(recs => {
+          const others = recs
+            .filter(b => b.id !== bookId)
+            .slice(0, 6);
+
+          if (!others.length) {
+            recGrid.innerHTML = "<p>No recommendations available.</p>";
+            return;
+          }
+
+          others.forEach(b => {
+            const a = document.createElement("a");
+            a.href = `/book/${b.id}/`;
+            a.className = "card";
+
+            a.innerHTML = `
+              <img src="${b.img_src || '/static/images/default-book.png'}"
+                   alt="${b.title}">
+              <div class="card-content">
+                <p class="card-title">${b.title}</p>
+                <p class="card-authors">${b.authors || ""}</p>
+              </div>
+            `;
+            recGrid.appendChild(a);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          recGrid.innerHTML = "<p>Could not load recommendations.</p>";
         });
-    </script>
+    });
+  </script>
 </body>
 </html>

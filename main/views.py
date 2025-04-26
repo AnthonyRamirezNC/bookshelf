@@ -28,6 +28,9 @@ def home(request):
 def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
+def search_book(request):
+    return render(request, "search_book.html")
+
 @login_required(login_url='/login/')
 def profile(request):
     try:
@@ -60,7 +63,9 @@ def add_book_to_db(serialized_book):
             page_count=serialized_book.get("page_count"),
             img_src=serialized_book.get("img_src"),
             description=serialized_book.get("description"),
-        ) 
+        )
+    else:
+        return Book.objects.get(isbn13=serialized_book.get("isbn13"))
 
 def check_if_book_in_db(serialized_book):
     return Book.objects.filter(isbn13=serialized_book.get("isbn13")).exists()
@@ -139,8 +144,9 @@ def serialize_books_from_ext_response(book_data_list):
             "description" : description
         })
         if book_serialized.is_valid():
-            serialized_book_list.append(book_serialized.data)
-            add_book_to_db(book_serialized.validated_data)
+            book_obj = add_book_to_db(book_serialized.validated_data)
+            real_serialized = BookSerializer(book_obj)
+            serialized_book_list.append(real_serialized.data)
         else: 
             print("could not serialize book because: \n")
             print(book_serialized.errors)
