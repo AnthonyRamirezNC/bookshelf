@@ -6,4 +6,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         normalizeGenres()
-        self.stdout.write(self.style.SUCCESS("Books normalized to DB successfully"))
+        self.stdout.write(self.style.SUCCESS("Book genres normalized to DB successfully"))
