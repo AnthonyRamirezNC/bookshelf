@@ -19,7 +19,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.contrib.auth import views as auth_views
 from main.views import *
-from main.views import book_detail
+from main.views import book_detail, search_book
 
 urlpatterns = [
     # Schema endpoint
@@ -34,6 +34,7 @@ urlpatterns = [
     path("", home, name="home"),
 
     path("user/profile", profile, name="profile"),
+    path("search-book/", search_book, name="search-book"),
 
     #Books
     path("books/", BookListCreateView.as_view(), name="book-list-create"),
