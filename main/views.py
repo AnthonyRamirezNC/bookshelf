@@ -318,6 +318,47 @@ def GetBooksByIsbn(request, isbn):
                 'error' : str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+#get rating by isbn
+@extend_schema(
+    tags=["External API"],
+    request = ExtISBNSerializer, #request serializer to show in docs
+    responses= {
+            200: OpenApiResponse(description="external Book retrieval by isbn successful"),
+            500: OpenApiResponse(description="Internal server error"),
+        }
+    )
+@api_view(["GET"])
+def GetRatingByIsbn(request, isbn):
+    isbn = isbn.replace("-", "")
+    try:
+        url = f'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=1&key={os.getenv("GOOGLE_BOOKS_API_KEY")}'
+        ext_response = requests.get(url)
+        ext_response_data = ext_response.json()
+        book_data_list = ext_response_data["items"]
+        for book in book_data_list:
+            book_info = book["volumeInfo"]
+            if book_info.get("industryIdentifiers"):
+                #extract image if in google books
+                if book_info.get("averageRating"):
+                    rating = book_info.get("averageRating")
+                if book_info.get("ratingsCount"):
+                    rating_count = book_info.get("ratingsCount")
+        return Response({
+            'message': f'call for ISBN: {isbn} Successful',
+            'rating' : rating,
+            'rating_count' : rating_count
+            }, status=status.HTTP_200_OK)
+    except Exception as e:
+        if str(e) == "'items'":
+            return Response({
+            'message': f'Ext Call for ISBN: {isbn} Successful but no results returned',
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+            'message': "An internal error occured",
+            'error' : str(e),
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 #database views
 
 
