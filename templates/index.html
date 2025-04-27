@@ -45,7 +45,7 @@
         </div>
     </nav>
 </header>
-    <div id="search-results-section" style="display: none;">
+    <div id="search-results-section" style="display: none;" class="book-section">
         <h2>Search Results</h2>
         <div class="book-grid" id="search-results-grid"></div>
         <button id="load-more-search" class="load-more-btn">Load More</button>
@@ -133,6 +133,10 @@
         document.addEventListener("DOMContentLoaded", function () {
             let currentIndex = 0;
             const booksPerPage = 10;
+            const searchBookGrid = document.getElementById("search-results-grid");
+            const searchResultsSection = document.getElementById("search-results-section");
+            const loadMoreSearchButton = document.getElementById("load-more-search");
+
             let booksByGenre = {};
             let currentIndexByGenre = {};
             
@@ -156,7 +160,6 @@
                 "food"
             ];
 
-            const loadMoreButton = document.getElementById("load-more");
             const searchForm = document.querySelector(".search-form");
             const searchInput = searchForm.querySelector("input[name='title']");
 
@@ -175,7 +178,6 @@
                         data.forEach(book => {
                             if (Array.isArray(book.genres)) {
                                 book.genres.forEach(genre => {
-                                    console.log("genre: " + genre);
                                     genre = genre.toLowerCase()
                                     if (genres.includes(genre)) {
                                         if (!booksByGenre[genre]) {
@@ -241,6 +243,43 @@
             }
         }
 
+        function renderSearchBooks(books) {
+            if (!Array.isArray(books)) {
+                console.error("Invalid data format: Expected an array of books.");
+                return;
+            }
+            const booksToLoad = books.slice(currentIndex, currentIndex + booksPerPage);
+            booksToLoad.forEach(book => {
+                if (book.img_src) {
+                    const bookCard = document.createElement("div");
+                    bookCard.className = "book-card";
+                    bookCard.innerHTML = `
+                        <div>
+                            <img src="${book.img_src}" alt="${book.title}">
+                            <h3>${book.title}</h3>
+                            <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
+                        </div>
+                    `;
+                    bookCard.addEventListener("click", function () {
+                        if (book.id) {
+                            window.location.href = `/book/${book.id}/`;
+                        } else {
+                            const queryParams = new URLSearchParams(book).toString();
+                            window.location.href = `/search-book/?${queryParams}`;
+                        }
+                    });
+                    searchBookGrid.appendChild(bookCard);
+                }
+            });
+            currentIndex += booksPerPage;
+
+            if (currentIndex >= books.length) {
+                loadMoreSearchButton.style.display = "none";
+            } else {
+                loadMoreSearchButton.style.display = "block";
+            }
+        }
+
         genres.forEach(genre => {
             const button = document.getElementById(`load-more-${genre}`);
             if (button) {
@@ -250,76 +289,45 @@
             }
         });
         loadBooks();
-    });
-    searchForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        const title = searchInput.value.trim();
-        if (title) {
-            fetch(`/ext/books/search-title/${title}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch books");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.books_returned || !Array.isArray(data.books_returned)) {
-                        throw new Error("Invalid response format: Expected an array of books in 'books_returned'.");
-                    }
 
-                    const searchResultsSection = document.getElementById("search-results-section");
-                    const searchResultsGrid = document.getElementById("search-results-grid");
-                    const loadMoreSearchButton = document.getElementById("load-more-search");
-
-                    searchResultsGrid.innerHTML = "";
-                    searchResultsSection.style.display = "block";  // Make it visible!
-
-                    let currentSearchIndex = 0;
-                    const searchBooksPerPage = 10;
-                    const searchBooks = data.books_returned;
-
-                    function renderSearchBooks() {
-                        const booksToLoad = searchBooks.slice(currentSearchIndex, currentSearchIndex + searchBooksPerPage);
-
-                        booksToLoad.forEach(book => {
-                            if (book.img_src) {
-                                const bookCard = document.createElement("div");
-                                bookCard.className = "book-card";
-                                bookCard.innerHTML = `
-                                    <div>
-                                        <img src="${book.img_src}" alt="${book.title}">
-                                        <h3>${book.title}</h3>
-                                        <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
-                                    </div>
-                                `;
-                                bookCard.addEventListener("click", function () {
-                                    if (book.id) {
-                                        window.location.href = `/book/${book.id}/`;
-                                    }
-                                });
-                                searchResultsGrid.appendChild(bookCard);
-                            }
-                        });
-
-                        currentSearchIndex += searchBooksPerPage;
-
-                        if (currentSearchIndex >= searchBooks.length) {
+        searchForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const title = searchInput.value.trim();
+            if (title) {
+                fetch(`/ext/books/search-title/${title}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Failed to fetch books");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.books_returned || !Array.isArray(data.books_returned)) {
+                            throw new Error("Invalid response format: Expected an array of books in 'books_returned'.");
+                        }
+                        currentIndex = 0;
+                        searchBookGrid.innerHTML = "";
+                        if (data.books_returned.length === 0) {
+                            searchBookGrid.innerHTML = "<p>No books found.</p>";
                             loadMoreSearchButton.style.display = "none";
                         } else {
-                            loadMoreSearchButton.style.display = "block";
+                            searchResultsSection.style.display = "block";
+                            renderSearchBooks(data.books_returned);
+                            loadMoreSearchButton.onclick = function () {
+                                renderSearchBooks(data.books_returned);
+                            };
                         }
-                    }
-                    renderSearchBooks();
-                    loadMoreSearchButton.onclick = function () {
-                        renderSearchBooks();
-                    };
-                })
-                .catch(error => {
-                    console.error("Error fetching search results:", error);
-                });
-        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching books:", error);
+                        searchBookGrid.innerHTML = "<p>Error fetching books. Please try again later.</p>";
+                        loadMoreSearchButton.style.display = "none";
+                    });
+            } else {
+                loadBooks();
+            }
+        });
     });
-
     </script>
 </body>
 </html>
