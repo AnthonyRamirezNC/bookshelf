@@ -213,7 +213,7 @@
     <div class="accordion">
       <details open>
         <summary>More in this Genre</summary>
-        <div id="recommendation-grid" class="cards-grid">Loading Results</div>
+        <div id="recommendation-grid" class="cards-grid">Loading Results, May Take A Few Seconds</div>
         <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
       </details>
     </div>
@@ -223,6 +223,28 @@
         <div id="review-grid" class="review-grid"></div>
         <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
       </details>
+    </div>
+    
+    <div id="review-form-section" style="display: none;">
+      <h3>Leave a Review</h3>
+      <form id="review-form">
+          <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
+          <br>
+          <label for="rating">Rating:</label>
+          <select name="rating" id="rating" required>
+              <option value="">Select rating</option>
+              <option value="1">1 ⭐</option>
+              <option value="2">2 ⭐⭐</option>
+              <option value="3">3 ⭐⭐⭐</option>
+              <option value="4">4 ⭐⭐⭐⭐</option>
+              <option value="5">5 ⭐⭐⭐⭐⭐</option>
+          </select>
+          <br><br>
+          <button type="submit">Submit Review</button>
+      </form>
+    </div>
+    <div id="login-message" style="display: none;">
+      <p><a href="/login/">Login</a> to leave a review!</p>
     </div>
   </div>
 
@@ -239,6 +261,10 @@
       const recGrid = document.getElementById("recommendation-grid");
       const loadMoreBtn = document.getElementById("load-more-recs");
       const likeBookBtn = document.getElementById("like-button");
+      const reviewFormSection = document.getElementById("review-form-section");
+      const loginMessage = document.getElementById("login-message");
+      const reviewForm = document.getElementById("review-form");
+
 
       try {
         const response = await fetch('/auth/check/', {
@@ -258,9 +284,13 @@
         if (!data.is_logged_in) {
           likeBookBtn.disabled = true;
           likeBookBtn.title = "Login to like this book!";
+          reviewFormSection.style.display = "none";
+          loginMessage.style.display = "block";
         } else {
           likeBookBtn.disabled = false;
           likeBookBtn.title = "";
+          reviewFormSection.style.display = "block";
+          loginMessage.style.display = "none";
         }
       } catch (error) {
         console.error('Error checking login status:', error);
@@ -308,6 +338,7 @@
 
         recommendationList = others;
         currentIndex = 0;
+        recGrid.innerHTML = "";   
         renderRecommendations(recGrid, loadMoreBtn);
 
         if (recommendationList.length > booksPerPage) {
@@ -355,6 +386,51 @@
           console.error(error);
         }
       });
+
+      reviewForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const reviewText = document.getElementById("review_text").value.trim();
+        const rating = document.getElementById("rating").value;
+
+        if (!reviewText || !rating) {
+          alert("Please fill out both the review text and select a rating.");
+          return;
+        }
+
+        const crsfToken = getCookie('csrftoken');
+        const isbn = currentBook.isbn13;
+
+        try {
+          const response = await fetch(`/reviews/create/${isbn}/`, {
+            method: 'POST',
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": crsfToken,
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              review: reviewText,
+              rating: rating
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to submit review.');
+          }
+
+          const data = await response.json();
+          console.log('Review submitted:', data);
+
+          alert("Review submitted successfully!");
+          location.reload();
+        } catch (error) {
+          console.error('Error submitting review:', error);
+          alert("Error submitting review. Please try again.");
+        }
+      });
   });
 
 
@@ -376,8 +452,7 @@
 
   function renderRecommendations(recGrid, loadMoreBtn) {
     const endIndex = currentIndex + booksPerPage;
-    const booksToShow = recommendationList.slice(currentIndex, endIndex);
-    recGrid.innerHTML = "";    
+    const booksToShow = recommendationList.slice(currentIndex, endIndex); 
 
     booksToShow.forEach(b => {
       const a = document.createElement("a");
