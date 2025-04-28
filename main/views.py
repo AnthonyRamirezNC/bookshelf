@@ -478,7 +478,7 @@ class BookDetailView(APIView):
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-@login_required
+
 @api_view(['GET'])
 def recommend_books(request):
     user = request.user

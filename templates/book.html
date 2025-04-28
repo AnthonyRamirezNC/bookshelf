@@ -213,7 +213,7 @@
     <div class="accordion">
       <details open>
         <summary>More in this Genre</summary>
-        <div id="recommendation-grid" class="cards-grid"></div>
+        <div id="recommendation-grid" class="cards-grid">Loading Results</div>
         <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
       </details>
     </div>
@@ -377,6 +377,7 @@
   function renderRecommendations(recGrid, loadMoreBtn) {
     const endIndex = currentIndex + booksPerPage;
     const booksToShow = recommendationList.slice(currentIndex, endIndex);
+    recGrid.innerHTML = "";    
 
     booksToShow.forEach(b => {
       const a = document.createElement("a");
@@ -404,7 +405,8 @@
     const reviewGrid = document.getElementById("review-grid");
     reviewGrid.innerHTML = "";
 
-    reviews.forEach(review => {
+    if(reviews.length > 0){
+      reviews.forEach(review => {
       const div = document.createElement("div");
       div.className = "review-card";
 
@@ -415,7 +417,15 @@
       `;
 
       reviewGrid.appendChild(div);
-    });
+      });
+    }else{
+      const div = document.createElement("div");
+      no_reviews = "No Reviews yet"
+      div.innerHTML = `
+        <div class="review-text">${no_reviews}</div>
+      `;
+      reviewGrid.appendChild(div);
+    }
   }
 
 
