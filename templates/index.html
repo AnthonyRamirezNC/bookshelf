@@ -334,6 +334,17 @@
             }
         });
     });
+
+    document.getElementById("load-more-liked").addEventListener("click", () => {
+    renderBookCards(likedBooks, "liked-book-grid", { value: likedIndex }, "load-more-liked");
+    });
+    document.getElementById("load-more-reviewed").addEventListener("click", () => {
+        renderBookCards(reviewedBooks, "reviewed-book-grid", { value: reviewedIndex }, "load-more-reviewed");
+    });
+    document.getElementById("load-more-recs").addEventListener("click", () => {
+        renderBookCards(recommendationList, "rec-book-grid", { value: recIndex }, "load-more-recs");
+    });
+
     </script>
 </body>
 </html>
