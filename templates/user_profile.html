@@ -119,6 +119,25 @@
                         <button id="load-more-rec" class="load-more-btn">Load More</button>
                     </div>
                 {% endif %}
+
+                {% if is_own_profile and followed_profiles %}
+                <div class="book-section">
+                    <h4>Profiles You're Following</h4>
+                    <div class="book-grid">
+                        {% for followed in followed_profiles %}
+                        <div class="book-card" onclick="location.href='/profile/{{ followed.user.username }}/'" style="cursor: pointer;">
+                            <h3>{{ followed.display_name|default:followed.user.username }}</h3>
+                            <p>{{ followed.user.email }}</p>
+                            {% if followed.bio %}
+                                <p>{{ followed.bio|truncatewords:12 }}</p>
+                            {% else %}
+                                <p><em>No bio yet</em></p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </main>

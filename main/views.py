@@ -45,12 +45,14 @@ def profile(request, username=None):
             }
         )
         is_own_profile = True
+        followed_profiles = user_profile.followed_users.all()
     else:
         try:
             # Viewing someone else's profile
             target_user = User.objects.get(username=username)
             user_profile = UserProfile.objects.get(user=target_user)
             is_own_profile = False
+            followed_profiles = None
         except User.DoesNotExist:
             return Response({
                 "message": "User not found with that username"
@@ -63,6 +65,7 @@ def profile(request, username=None):
     return render(request, "user_profile.html", {
         "profile": user_profile,
         "is_own_profile": is_own_profile,
+        "followed_profiles": followed_profiles,
     })
     
 
