@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import *
 from .serializers import *
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
@@ -429,7 +429,9 @@ def register(request):
 
     return render(request, "register.html", {"form": form})
 
-
+def logout_view(request):
+    logout(request)
+    return redirect('/')
 
 #books
 @extend_schema(tags=["Books"])

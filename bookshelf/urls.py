@@ -47,7 +47,7 @@ urlpatterns = [
     path("login/", login_view, name="login"),
     path('auth/check/', check_login_status, name='check-login-status'),
     path("register/", register, name="register"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", logout_view, name="logout"),
 
     #user profiles    
     path("like-book/<str:isbn>/", like_book_with_isbn, name="like-book-by-isbn"),
