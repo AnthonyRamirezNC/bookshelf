@@ -307,6 +307,7 @@ header img {
       const reviewForm = document.getElementById("review-form");
 
       let currentUsername = null;
+      let isLoggedIn = false;
 
       try {
         const response = await fetch('/auth/check/', {
@@ -332,8 +333,10 @@ header img {
           likeBookBtn.disabled = false;
           likeBookBtn.title = "";
           loginMessage.style.display = "none";
+
           
           currentUsername = data.username
+          isLoggedIn = true;
           console.log("currentUsername: " + currentUsername)
         }
       } catch (error) {
@@ -634,8 +637,10 @@ function showConfirmation(message, isError = false) {
           loginMessage.innerHTML = "";
           loginMessage.appendChild(alreadyReviewedMsg);
           loginMessage.style.display = "block";
+        } else {
+          reviewFormSection.style.display = "block";
         }
-      }
+      } 
     } catch (error) {
       console.error('Error checking retrieving reviews:', error);
     }
