@@ -168,7 +168,10 @@ def create_book_item(isbn):
 @api_view(['GET'])
 def check_login_status(request):
     is_logged_in = request.user.is_authenticated
-    return Response({'is_logged_in': is_logged_in})
+    return Response({
+        'is_logged_in': is_logged_in,
+        'username': request.user.username,
+        })
 
 #external api views
 

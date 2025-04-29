@@ -265,6 +265,7 @@
       const loginMessage = document.getElementById("login-message");
       const reviewForm = document.getElementById("review-form");
 
+      let currentUsername = null;
 
       try {
         const response = await fetch('/auth/check/', {
@@ -289,8 +290,10 @@
         } else {
           likeBookBtn.disabled = false;
           likeBookBtn.title = "";
-          reviewFormSection.style.display = "block";
           loginMessage.style.display = "none";
+          
+          currentUsername = data.username
+          console.log("currentUsername: " + currentUsername)
         }
       } catch (error) {
         console.error('Error checking login status:', error);
@@ -325,7 +328,7 @@
           pubDateEl.textContent   = book.publication_date || "N/A";
           currentBook = book;
 
-          fetchReviews(book.isbn13);
+          fetchReviews(book.isbn13, loginMessage, currentUsername);
           
           if (!book.genres || book.genres.length === 0) throw new Error("No genre specified");
           
@@ -535,9 +538,10 @@
     }
   }
 
-  async function fetchReviews(isbn) {
+  async function fetchReviews(isbn, loginMessage, currentUsername) {
     try {
       const crsfToken = getCookie('csrftoken');
+      const reviewFormSection = document.getElementById("review-form-section");
       const response = await fetch(`/reviews/book/${isbn}/`, {
         method: 'GET',
         headers: {
@@ -547,17 +551,29 @@
         },
         credentials: "same-origin",
       });
-      console.log(response)
 
       if (!response.ok) {
         throw new Error('Failed to retrieve books reviews');
       }
       
       const data = await response.json();
-      console.log(data);
 
       renderReviews(data.reviews);
+      console.log(currentUsername)
       
+      if (currentUsername) {
+        const userReview = data.reviews.find(r => r.username === currentUsername);
+        if (userReview) {
+          console.log("User already reviewed!");
+          reviewFormSection.style.display = "none";
+
+          const alreadyReviewedMsg = document.createElement("p");
+          alreadyReviewedMsg.textContent = "You have already submitted a review for this book.";
+          loginMessage.innerHTML = "";
+          loginMessage.appendChild(alreadyReviewedMsg);
+          loginMessage.style.display = "block";
+        }
+      }
     } catch (error) {
       console.error('Error checking retrieving reviews:', error);
     }
