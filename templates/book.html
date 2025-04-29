@@ -291,6 +291,7 @@
           likeBookBtn.disabled = false;
           likeBookBtn.title = "";
           loginMessage.style.display = "none";
+          reviewFormSection.style.display = "none";
           
           currentUsername = data.username
           console.log("currentUsername: " + currentUsername)
@@ -572,6 +573,8 @@
           loginMessage.innerHTML = "";
           loginMessage.appendChild(alreadyReviewedMsg);
           loginMessage.style.display = "block";
+        }else{
+          reviewFormSection.style.display = "block";
         }
       }
     } catch (error) {
