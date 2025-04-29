@@ -130,6 +130,18 @@
       color: var(--text1);
       margin: 0;
     }
+    .load-more-btn {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    }
     @media (max-width: 600px) {
       .book-detail {
         flex-direction: column;
@@ -165,16 +177,23 @@
     <div class="accordion">
       <details open>
         <summary>More in this Genre</summary>
-        <div id="recommendation-grid" class="cards-grid">
-        </div>
+        <div id="recommendation-grid" class="cards-grid"></div>
+        <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
       </details>
     </div>
   </div>
 
   <script>
+    let recommendationList = [];
+    let currentIndex = 0;
+    const booksPerPage = 5;
+    const recGrid = document.getElementById("recommendation-grid");
+
     document.addEventListener("DOMContentLoaded", function () {
       const parts = window.location.pathname.split("/").filter(p => p);
       const bookId = parts[parts.length - 1];
+      const recGrid = document.getElementById("recommendation-grid");
+      const loadMoreBtn = document.getElementById("load-more-recs");
 
       const coverEl     = document.getElementById("book-cover");
       const titleEl     = document.getElementById("book-title");
@@ -185,14 +204,13 @@
       const pagesEl     = document.getElementById("book-page-count");
       const publisherEl = document.getElementById("book-publisher");
       const pubDateEl   = document.getElementById("book-publication-date");
-      const recGrid     = document.getElementById("recommendation-grid");
 
       fetch(`/books/${bookId}/`)
         .then(r => {
           if (!r.ok) throw new Error("Failed to fetch book");
           return r.json();
         })
-        .then(book => {
+        .then(async (book) => {
           coverEl.src         = book.img_src || coverEl.src;
           titleEl.textContent = book.title  || "Unknown Title";
           authorEl.textContent= book.authors || "Unknown Author";
@@ -202,44 +220,96 @@
           pagesEl.textContent = book.page_count || "N/A";
           publisherEl.textContent = book.publisher || "N/A";
           pubDateEl.textContent   = book.publication_date || "N/A";
+          
+          if (!book.genres || book.genres.length === 0) throw new Error("No genre specified");
+          
+          const others = await fetchRecommendations(book.genres, bookId);
 
-          if (!book.genre) throw new Error("No genre specified");
-          return fetch(
-            `/ext/books/search-genre/${encodeURIComponent(book.genre)}/`
-          );
-        })
-        .then(r => r.ok ? r.json() : Promise.reject("Rec fetch failed"))
-        .then(recs => {
-          const others = recs
-            .filter(b => b.id !== bookId)
-            .slice(0, 6);
+        if (!others.length) {
+          recGrid.innerHTML = "<p>No recommendations available.</p>";
+          return;
+        }
 
-          if (!others.length) {
-            recGrid.innerHTML = "<p>No recommendations available.</p>";
-            return;
-          }
+        recommendationList = others;
+        currentIndex = 0;
+        renderRecommendations(recGrid, loadMoreBtn);
 
-          others.forEach(b => {
-            const a = document.createElement("a");
-            a.href = `/book/${b.id}/`;
-            a.className = "card";
+        if (recommendationList.length > booksPerPage) {
+          loadMoreBtn.style.display = "block";
+        } else {
+          loadMoreBtn.style.display = "none";
+        }
 
-            a.innerHTML = `
-              <img src="${b.img_src || '/static/images/default-book.png'}"
-                   alt="${b.title}">
-              <div class="card-content">
-                <p class="card-title">${b.title}</p>
-                <p class="card-authors">${b.authors || ""}</p>
-              </div>
-            `;
-            recGrid.appendChild(a);
-          });
-        })
-        .catch(err => {
-          console.error(err);
-          recGrid.innerHTML = "<p>Could not load recommendations.</p>";
-        });
+
+      })
+      .catch(err => {
+        console.error(err);
+        recGrid.innerHTML = "<p>Could not load recommendations.</p>";
+      });
+
+      loadMoreBtn.addEventListener("click", function () {
+        renderRecommendations(recGrid, loadMoreBtn);
+      });
+  });
+
+  function renderRecommendations(recGrid, loadMoreBtn) {
+    const endIndex = currentIndex + booksPerPage;
+    const booksToShow = recommendationList.slice(currentIndex, endIndex);
+
+    booksToShow.forEach(b => {
+      const a = document.createElement("a");
+      a.href = `/book/${b.id}/`;
+      a.className = "card";
+
+      a.innerHTML = `
+        <img src="${b.img_src || '/static/images/default-book.png'}" alt="${b.title}">
+        <div class="card-content">
+          <p class="card-title">${b.title}</p>
+          <p class="card-authors">${b.authors || ""}</p>
+        </div>
+      `;
+      recGrid.appendChild(a);
     });
-  </script>
+
+    currentIndex = endIndex;
+
+    if (currentIndex >= recommendationList.length) {
+      loadMoreBtn.style.display = "none";
+    }
+  }
+
+
+  async function fetchRecommendations(genres, originalBookId) {
+    try {
+      const fetchPromises = genres.map(async (genre) => {
+        const res = await fetch(`/ext/books/search-genre/${encodeURIComponent(genre)}`);
+        if (!res.ok) throw new Error("Rec fetch failed");
+
+        const data = await res.json();
+        return data.books_returned || [];
+      });
+
+      const allGenreResults = await Promise.all(fetchPromises);
+
+      const allBooks = allGenreResults.flat();
+
+      const uniqueBooks = [];
+      const seenIds = new Set();
+
+      allBooks.forEach(b => {
+        if (!seenIds.has(b.id) && b.id !== originalBookId) {
+          seenIds.add(b.id);
+          uniqueBooks.push(b);
+        }
+      });
+
+      return uniqueBooks;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+</script>
 </body>
 </html>
