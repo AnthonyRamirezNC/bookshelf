@@ -53,6 +53,7 @@ urlpatterns = [
     path("user/profile/edit", update_user_profile, name="edit-user-profile"),
     path("user/profile/create", create_user_profile, name = "create-user-profile"),
     path("user/get-profile", get_users_profile, name="get-user-profile"),
+    path("update-bio/", update_bio, name="update_bio"),
 
     #reviews
     path("reviews/user", get_all_reviews_by_user, name="get-users-reviews"),

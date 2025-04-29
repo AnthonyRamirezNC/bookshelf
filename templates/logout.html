@@ -1,8 +1,31 @@
-{% extends "base.html" %}
-
-{% block content %}
-  <h2>You have been logged out.</h2>
-  <a href="{% url 'login' %}">Login again</a>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logged Out</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <a href="/">
+            <img src="{% static 'images/logo.svg' %}" alt="Bookshelf Logo">
+        </a>
+    </header>
+    <main class="logout-container">
+        <div class="logout-card">
+            <h2>You have been logged out.</h2>
+            <p>Thank you for visiting! We hope to see you again soon.</p>
+            <a href="{% url 'login' %}" class="btn">Login Again</a>
+            <a href="/" class="btn-secondary">Return to Home</a>
+        </div>
+    </main>
+    <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn">Logout</button>
+    </form>
+</body>
+</html>
 
 

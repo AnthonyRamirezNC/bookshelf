@@ -177,15 +177,56 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     }
+
+    
+.like-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #FFFFFF;
+    background-color: #CE796B; 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+}
+
+.like-btn:hover {
+    background-color: #A65A4A; 
+    transform: translateY(-2px); 
+}
+
+.like-btn:disabled {
+    background-color: #D3D3D3;
+    cursor: not-allowed;
+}
+
     @media (max-width: 600px) {
       .book-detail {
         flex-direction: column;
       }
     }
+
+    header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+header img {
+  max-width: 190px; 
+  height: auto;
+}
   </style>
 </head>
 <body>
-
+  <header>
+    <a href="/">
+        <img src="/static/images/logo.svg" alt="Bookshelf Logo">
+    </a>
+    </header>
   <div class="container">
     <div class="book-detail">
       <div class="book-cover-container">
@@ -205,7 +246,7 @@
           <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
           <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
           <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
-          <button id="like-button" class="like-btn" style="display: block;">Like Book</button>
+          <button id="like-button" class="like-btn">Like Book</button>
         </div>
       </div>
     </div>
@@ -266,6 +307,7 @@
       const reviewForm = document.getElementById("review-form");
 
       let currentUsername = null;
+      let isLoggedIn = false;
 
       try {
         const response = await fetch('/auth/check/', {
@@ -294,6 +336,7 @@
           reviewFormSection.style.display = "none";
           
           currentUsername = data.username
+          isLoggedIn = true;
           console.log("currentUsername: " + currentUsername)
         }
       } catch (error) {
@@ -363,10 +406,10 @@
       });
 
       likeBookBtn.addEventListener("click", async function () {
-        try {
-          const crsfToken = getCookie('csrftoken');
-          const isbn = currentBook.isbn13;
-          const response = await fetch(`/like-book/${isbn}/`, {
+    try {
+        const crsfToken = getCookie('csrftoken');
+        const isbn = currentBook.isbn13;
+        const response = await fetch(`/like-book/${isbn}/`, {
             method: 'POST',
             headers: {
                 "Accept": "application/json",
@@ -374,22 +417,43 @@
                 "X-CSRFToken": crsfToken,
             },
             credentials: "same-origin",
-          });
+        });
 
-          if (!response.ok) {
+        if (!response.ok) {
             throw new Error("Failed to like the book");
-          }
-
-          const data = await response.json();
-          console.log("Book liked successfully:", data);
-          
-          likeBookBtn.textContent = "Liked!";
-          likeBookBtn.disabled = true;
-
-        } catch (error) {
-          console.error(error);
         }
-      });
+
+        const data = await response.json();
+        console.log("Book liked successfully:", data);
+
+        likeBookBtn.textContent = "Liked!";
+        likeBookBtn.disabled = true;
+
+        showConfirmation("Book liked successfully!");
+    } catch (error) {
+        console.error(error);
+        showConfirmation("Failed to like the book. Please try again.", true);
+    }
+});
+
+function showConfirmation(message, isError = false) {
+    const confirmation = document.createElement("div");
+    confirmation.textContent = message;
+    confirmation.style.position = "fixed";
+    confirmation.style.bottom = "20px";
+    confirmation.style.right = "20px";
+    confirmation.style.padding = "10px 20px";
+    confirmation.style.backgroundColor = isError ? "#FF6B6B" : "#4CAF50";
+    confirmation.style.color = "#FFFFFF";
+    confirmation.style.borderRadius = "5px";
+    confirmation.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
+    confirmation.style.zIndex = "1000";
+    document.body.appendChild(confirmation);
+
+    setTimeout(() => {
+        confirmation.remove();
+    }, 3000);
+}
 
       reviewForm.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -573,10 +637,10 @@
           loginMessage.innerHTML = "";
           loginMessage.appendChild(alreadyReviewedMsg);
           loginMessage.style.display = "block";
-        }else{
+        } else {
           reviewFormSection.style.display = "block";
         }
-      }
+      } 
     } catch (error) {
       console.error('Error checking retrieving reviews:', error);
     }

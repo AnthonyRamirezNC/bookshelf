@@ -55,4 +55,4 @@ def build_recommendations(user):
     recommendations = df[~df['id'].isin(liked_books)].sort_values('score', ascending=False)
     
     # change value to recommend more or less books
-    return list(recommendations.head(5)['id'])
+    return list(recommendations.head(10)['id'])

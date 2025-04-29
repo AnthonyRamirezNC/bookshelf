@@ -243,3 +243,204 @@ ul.errorlist {
     color: #FFFFFF; 
     background-color: #A65A4A;
 }
+
+
+.profile-container {
+    margin: 40px auto;
+    max-width: 800px;
+    padding: 20px;
+    background-color: #F9F3F0;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-card {
+    background-color: #FFFFFF;
+    border: 1px solid #CE796B;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-name {
+    font-size: 28px;
+    color: #5F758E;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.profile-email {
+    font-size: 16px;
+    color: #888888;
+    margin-bottom: 20px;
+}
+
+.profile-bio {
+    margin-bottom: 30px;
+    text-align: left;
+    color: #5F758E;
+}
+
+.profile-bio h4 {
+    font-size: 20px;
+    color: #CE796B;
+    margin-bottom: 10px;
+}
+
+.profile-bio p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.book-section {
+    margin-top: 40px;
+    text-align: left;
+}
+
+.book-section h4 {
+    font-size: 22px;
+    color: #CE796B;
+    margin-bottom: 15px;
+}
+
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.book-card {
+    background-color: #FFFFFF;
+    border: 1px solid #CE796B;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.book-card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.book-card h3 {
+    font-size: 16px;
+    color: #5F758E;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.book-card p {
+    font-size: 14px;
+    color: #717744;
+    margin: 0;
+}
+
+.book-section p {
+    font-size: 16px;
+    color: #888888;
+    text-align: center;
+    margin-top: 20px;
+}
+
+
+.like-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #CE796B; 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+}
+
+.like-btn:hover {
+    background-color: #A65A4A; 
+    transform: translateY(-2px); 
+}
+
+.like-btn:disabled {
+    background-color: #D3D3D3;
+    cursor: not-allowed;
+}
+
+
+.logout-container {
+    margin: 40px auto;
+    max-width: 600px;
+    padding: 20px;
+    text-align: center;
+    background-color: #F9F3F0;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logout-card {
+    background-color: #FFFFFF;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logout-card h2 {
+    font-size: 24px;
+    color: #5F758E;
+    margin-bottom: 10px;
+}
+
+.logout-card p {
+    font-size: 16px;
+    color: #888888;
+    margin-bottom: 20px;
+}
+
+.logout-card .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.logout-card .btn:hover {
+    background-color: #A65A4A;
+    transform: translateY(-2px);
+}
+
+.logout-card .btn-secondary {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #CE796B;
+    background-color: transparent;
+    border: 2px solid #CE796B;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    margin-left: 10px;
+}
+
+.logout-card .btn-secondary:hover {
+    background-color: #CE796B;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+}
