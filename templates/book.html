@@ -130,6 +130,41 @@
       color: var(--text1);
       margin: 0;
     }
+    .review-grid {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .review-card {
+      background: #fff;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+      font-size: 0.95em;
+      color: var(--text2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .review-username {
+      font-weight: bold;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .review-text {
+      font-style: italic;
+      margin-bottom: 10px;
+      flex-grow: 1;
+    }
+
+    .review-rating {
+      font-weight: bold;
+      color: var(--text1);
+    }
     .load-more-btn {
     display: block;
     margin: 20px auto;
@@ -170,6 +205,7 @@
           <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
           <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
           <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
+          <button id="like-button" class="like-btn" style="display: block;">Like Book</button>
         </div>
       </div>
     </div>
@@ -177,9 +213,38 @@
     <div class="accordion">
       <details open>
         <summary>More in this Genre</summary>
-        <div id="recommendation-grid" class="cards-grid"></div>
+        <div id="recommendation-grid" class="cards-grid">Loading Results, May Take A Few Seconds</div>
         <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
       </details>
+    </div>
+    <div class="accordion">
+      <details open>
+        <summary>Reviews</summary>
+        <div id="review-grid" class="review-grid"></div>
+        <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
+      </details>
+    </div>
+    
+    <div id="review-form-section" style="display: none;">
+      <h3>Leave a Review</h3>
+      <form id="review-form">
+          <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
+          <br>
+          <label for="rating">Rating:</label>
+          <select name="rating" id="rating" required>
+              <option value="">Select rating</option>
+              <option value="1">1 ⭐</option>
+              <option value="2">2 ⭐⭐</option>
+              <option value="3">3 ⭐⭐⭐</option>
+              <option value="4">4 ⭐⭐⭐⭐</option>
+              <option value="5">5 ⭐⭐⭐⭐⭐</option>
+          </select>
+          <br><br>
+          <button type="submit">Submit Review</button>
+      </form>
+    </div>
+    <div id="login-message" style="display: none;">
+      <p><a href="/login/">Login</a> to leave a review!</p>
     </div>
   </div>
 
@@ -187,13 +252,55 @@
     let recommendationList = [];
     let currentIndex = 0;
     const booksPerPage = 5;
+    let currentBook = null;
     const recGrid = document.getElementById("recommendation-grid");
 
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
       const parts = window.location.pathname.split("/").filter(p => p);
       const bookId = parts[parts.length - 1];
       const recGrid = document.getElementById("recommendation-grid");
       const loadMoreBtn = document.getElementById("load-more-recs");
+      const likeBookBtn = document.getElementById("like-button");
+      const reviewFormSection = document.getElementById("review-form-section");
+      const loginMessage = document.getElementById("login-message");
+      const reviewForm = document.getElementById("review-form");
+
+      let currentUsername = null;
+
+      try {
+        const response = await fetch('/auth/check/', {
+          method: 'GET',
+          headers: {
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to check login status');
+        }
+
+        const data = await response.json();
+        if (!data.is_logged_in) {
+          likeBookBtn.disabled = true;
+          likeBookBtn.title = "Login to like this book!";
+          reviewFormSection.style.display = "none";
+          loginMessage.style.display = "block";
+        } else {
+          likeBookBtn.disabled = false;
+          likeBookBtn.title = "";
+          loginMessage.style.display = "none";
+          reviewFormSection.style.display = "none";
+          
+          currentUsername = data.username
+          console.log("currentUsername: " + currentUsername)
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        likeBookBtn.disabled = true;
+        likeBookBtn.title = "Login to like this book!";
+      }
 
       const coverEl     = document.getElementById("book-cover");
       const titleEl     = document.getElementById("book-title");
@@ -220,6 +327,9 @@
           pagesEl.textContent = book.page_count || "N/A";
           publisherEl.textContent = book.publisher || "N/A";
           pubDateEl.textContent   = book.publication_date || "N/A";
+          currentBook = book;
+
+          fetchReviews(book.isbn13, loginMessage, currentUsername);
           
           if (!book.genres || book.genres.length === 0) throw new Error("No genre specified");
           
@@ -232,6 +342,7 @@
 
         recommendationList = others;
         currentIndex = 0;
+        recGrid.innerHTML = "";   
         renderRecommendations(recGrid, loadMoreBtn);
 
         if (recommendationList.length > booksPerPage) {
@@ -250,11 +361,102 @@
       loadMoreBtn.addEventListener("click", function () {
         renderRecommendations(recGrid, loadMoreBtn);
       });
+
+      likeBookBtn.addEventListener("click", async function () {
+        try {
+          const crsfToken = getCookie('csrftoken');
+          const isbn = currentBook.isbn13;
+          const response = await fetch(`/like-book/${isbn}/`, {
+            method: 'POST',
+            headers: {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": crsfToken,
+            },
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to like the book");
+          }
+
+          const data = await response.json();
+          console.log("Book liked successfully:", data);
+          
+          likeBookBtn.textContent = "Liked!";
+          likeBookBtn.disabled = true;
+
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      reviewForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const reviewText = document.getElementById("review_text").value.trim();
+        const rating = document.getElementById("rating").value;
+
+        if (!reviewText || !rating) {
+          alert("Please fill out both the review text and select a rating.");
+          return;
+        }
+
+        const crsfToken = getCookie('csrftoken');
+        const isbn = currentBook.isbn13;
+
+        try {
+          const response = await fetch(`/reviews/create/${isbn}/`, {
+            method: 'POST',
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": crsfToken,
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              review: reviewText,
+              rating: rating
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to submit review.');
+          }
+
+          const data = await response.json();
+          console.log('Review submitted:', data);
+
+          alert("Review submitted successfully!");
+          location.reload();
+        } catch (error) {
+          console.error('Error submitting review:', error);
+          alert("Error submitting review. Please try again.");
+        }
+      });
   });
+
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+
 
   function renderRecommendations(recGrid, loadMoreBtn) {
     const endIndex = currentIndex + booksPerPage;
-    const booksToShow = recommendationList.slice(currentIndex, endIndex);
+    const booksToShow = recommendationList.slice(currentIndex, endIndex); 
 
     booksToShow.forEach(b => {
       const a = document.createElement("a");
@@ -275,6 +477,33 @@
 
     if (currentIndex >= recommendationList.length) {
       loadMoreBtn.style.display = "none";
+    }
+  }
+
+  function renderReviews(reviews) {
+    const reviewGrid = document.getElementById("review-grid");
+    reviewGrid.innerHTML = "";
+
+    if(reviews.length > 0){
+      reviews.forEach(review => {
+      const div = document.createElement("div");
+      div.className = "review-card";
+
+      div.innerHTML = `
+        <div class="review-username">Username: ${review.username || "Anonymous"}</div>
+        <div class="review-text">"${review.review}"</div>
+        <div class="review-rating">Rating: ${review.rating}/5</div>
+      `;
+
+      reviewGrid.appendChild(div);
+      });
+    }else{
+      const div = document.createElement("div");
+      no_reviews = "No Reviews yet"
+      div.innerHTML = `
+        <div class="review-text">${no_reviews}</div>
+      `;
+      reviewGrid.appendChild(div);
     }
   }
 
@@ -307,6 +536,49 @@
     } catch (error) {
       console.error(error);
       return [];
+    }
+  }
+
+  async function fetchReviews(isbn, loginMessage, currentUsername) {
+    try {
+      const crsfToken = getCookie('csrftoken');
+      const reviewFormSection = document.getElementById("review-form-section");
+      const response = await fetch(`/reviews/book/${isbn}/`, {
+        method: 'GET',
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": crsfToken,
+        },
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to retrieve books reviews');
+      }
+      
+      const data = await response.json();
+
+      renderReviews(data.reviews);
+      console.log(currentUsername)
+      
+      if (currentUsername) {
+        const userReview = data.reviews.find(r => r.username === currentUsername);
+        if (userReview) {
+          console.log("User already reviewed!");
+          reviewFormSection.style.display = "none";
+
+          const alreadyReviewedMsg = document.createElement("p");
+          alreadyReviewedMsg.textContent = "You have already submitted a review for this book.";
+          loginMessage.innerHTML = "";
+          loginMessage.appendChild(alreadyReviewedMsg);
+          loginMessage.style.display = "block";
+        }else{
+          reviewFormSection.style.display = "block";
+        }
+      }
+    } catch (error) {
+      console.error('Error checking retrieving reviews:', error);
     }
   }
 

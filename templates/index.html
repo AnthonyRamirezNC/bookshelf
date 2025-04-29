@@ -293,6 +293,13 @@
         searchForm.addEventListener("submit", function (event) {
             event.preventDefault();
             const title = searchInput.value.trim();
+            searchResultsSection.style.display = "block";
+            searchBookGrid.innerHTML = `
+                <div class="loading-message">
+                    <p>Loading search results...</p>
+                </div>
+            `;
+
             if (title) {
                 fetch(`/ext/books/search-title/${title}`)
                     .then(response => {
@@ -311,7 +318,6 @@
                             searchBookGrid.innerHTML = "<p>No books found.</p>";
                             loadMoreSearchButton.style.display = "none";
                         } else {
-                            searchResultsSection.style.display = "block";
                             renderSearchBooks(data.books_returned);
                             loadMoreSearchButton.onclick = function () {
                                 renderSearchBooks(data.books_returned);

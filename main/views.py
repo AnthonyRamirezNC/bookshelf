@@ -12,7 +12,9 @@ from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.authentication import SessionAuthentication
+
 from django.contrib.auth.decorators import login_required
 import requests
 import os
@@ -162,6 +164,14 @@ def create_book_item(isbn):
 
     book_data_list = ext_response_data["items"]
     serialize_books_from_ext_response(book_data_list)
+
+@api_view(['GET'])
+def check_login_status(request):
+    is_logged_in = request.user.is_authenticated
+    return Response({
+        'is_logged_in': is_logged_in,
+        'username': request.user.username,
+        })
 
 #external api views
 
@@ -471,7 +481,7 @@ class BookDetailView(APIView):
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-@login_required
+
 @api_view(['GET'])
 def recommend_books(request):
     user = request.user
@@ -525,7 +535,6 @@ def get_users_profile(request):
             "profile_data": serialized_profile.data
         })
 
-@login_required
 @extend_schema(
 tags=["User Profile"],
 responses= {
@@ -538,8 +547,10 @@ responses= {
 ) 
 #like book based on isbn
 @api_view(['POST'])
+@authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def like_book_with_isbn(request, isbn):
+    print("RUNNING BOOK LIKE ENDPOINT", flush=True)
     isbn = isbn.replace("-", "")
     if len(isbn) == 10:
         isbn = pyisbn.convert(isbn)
@@ -635,7 +646,6 @@ def create_user_profile(request):
 #Review Endpoints
 
 #create review
-@login_required
 @extend_schema(
     tags=["Reviews"],
     request=ReviewSerializer,
@@ -734,7 +744,6 @@ def edit_review_with_isbn(request, isbn):
     }
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def get_all_reviews_by_isbn(request, isbn):
     isbn = isbn.replace("-", "")
     try:
@@ -748,12 +757,25 @@ def get_all_reviews_by_isbn(request, isbn):
 
     reviews = Review.objects.filter(book=book)
 
-    serialized = UserReviewSerializer(reviews, many=True)
     review_list = []
 
-    for review_data in serialized.data:
-        review_data["isbn13"] = isbn
-        review_list.append(review_data)
+    for review in reviews:
+        username = review.user_profile.user.username
+        isbn = review.book.isbn13
+        review_txt = review.review
+        print("review text: " + str(review_txt), flush=True)
+
+        serialized_review = UserReviewSerializer(review)
+        serialized_review_data = serialized_review.data
+        serialized_review_data["isbn"] = isbn
+        serialized_review_data["username"] = username
+        serialized_review_data["review"] = review_txt
+
+        review_list.append(serialized_review_data)
+        
+
+
+        
 
     return Response({
         "message": f"Found {len(reviews)} reviews for the book.",

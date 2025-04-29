@@ -44,11 +44,12 @@ urlpatterns = [
 
     #login
     path("login/", login_view, name="login"),
+    path('auth/check/', check_login_status, name='check-login-status'),
     path("register/", register, name="register"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
     #user profiles    
-    path("user/profile/like-book-isbn/<str:isbn>", like_book_with_isbn, name="like-book-by-isbn"),
+    path("like-book/<str:isbn>/", like_book_with_isbn, name="like-book-by-isbn"),
     path("user/profile/edit", update_user_profile, name="edit-user-profile"),
     path("user/profile/create", create_user_profile, name = "create-user-profile"),
     path("user/get-profile", get_users_profile, name="get-user-profile"),
