@@ -50,6 +50,15 @@ def profile(request):
     
     return render(request, "user_profile.html", {"profile": user_profile})
 
+@login_required
+def update_bio(request):
+    if request.method == "POST":
+        bio = request.POST.get("bio", "").strip()
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        profile.bio = bio
+        profile.save()
+        return redirect("user_profile")
+
 #helper methods
 def add_book_to_db(serialized_book):
     #check if book exists based on isbn13 if not add it

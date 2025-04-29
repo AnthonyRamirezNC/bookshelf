@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Bookshelf{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     <header>
         <a href="/">
-            <img src="/static/images/logo.svg" alt="Bookshelf Logo">
+            <img src="{% static 'images/logo.svg' %}" alt="Bookshelf Logo">
         </a>
     </header>
     <main>

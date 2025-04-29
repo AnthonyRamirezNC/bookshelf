@@ -1,136 +1,120 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .profile-bio textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #CE796B;
+    border-radius: 5px;
+    resize: none;
+}
 
-{% block title %}User Profile{% endblock %}
+.profile-bio .btn {
+    margin-top: 10px;
+}
 
-{% block extra_styles %}
-<style>
-  .profile-container {
-      margin: 40px auto;
-      max-width: 1000px;
-      padding: 20px;
-  }
+.profile-bio .btn-secondary {
+    margin-left: 10px;
+}
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/">
+            <img src="{% static 'images/logo.svg' %}" alt="Bookshelf Logo">
+        </a>
+    </header>
+    <main>
+        <div class="profile-container">
+            <div class="profile-card">
+                <h2 class="profile-name">{{ profile.display_name|default:profile.user.username }}</h2>
+                <p class="profile-email">{{ profile.user.email }}</p>
 
-  .profile-card {
-      background-color: #FFFFFF;
-      border: 1px solid #CE796B;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+                <div class="profile-bio">
+                    <h4>About</h4>
+                    {% if profile.bio %}
+                        <p id="bio-text">{{ profile.bio }}</p>
+                    {% else %}
+                        <p id="bio-text">No bio added yet.</p>
+                    {% endif %}
+                    <form id="bio-form" action="{% url 'update_bio' %}" method="POST" style="display: none;">
+                        {% csrf_token %}
+                        <textarea name="bio" id="bio-input" rows="4" placeholder="Write your bio here...">{{ profile.bio }}</textarea>
+                        <br>
+                        <button type="submit" class="btn">Save Bio</button>
+                        <button type="button" id="cancel-bio" class="btn-secondary">Cancel</button>
+                    </form>
+                    <button id="edit-bio" class="btn">Edit Bio</button>
+                </div>
 
-  .profile-name {
-      font-size: 28px;
-      color: #5F758E;
-  }
+                <div class="book-section">
+                    <h4>Liked Books</h4>
+                    {% if profile.liked_books.all %}
+                    <div class="book-grid">
+                        {% for book in profile.liked_books.all %}
+                        <div class="book-card">
+                            <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
+                            <h3>{{ book.title }}</h3>
+                            <p>{{ book.authors|default:'Unknown Author' }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>No liked books yet.</p>
+                    {% endif %}
+                </div>
 
-  .profile-email {
-      font-size: 16px;
-      color: #888888;
-      margin-bottom: 20px;
-  }
-
-  .profile-bio {
-      margin-bottom: 30px;
-  }
-
-  .book-section {
-      margin-top: 30px;
-  }
-
-  .book-section h4 {
-      color: #717744;
-      font-size: 22px;
-      margin-bottom: 15px;
-  }
-
-  .book-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 20px;
-  }
-
-  .book-card {
-      background-color: #FFFFFF;
-      border: 1px solid #CE796B;
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .book-card img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
-  }
-
-  .book-card h3 {
-      color: #5F758E;
-      font-size: 16px;
-      margin: 10px 0;
-  }
-
-  .book-card p {
-      color: #717744;
-      font-size: 14px;
-      margin: 0;
-  }
-  
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="profile-container">
-  <div class="profile-card">
-    <h2 class="profile-name">{{ profile.display_name|default:profile.user.username }}</h2>
-    <p class="profile-email">{{ profile.user.email }}</p>
-
-    {% if profile.bio %}
-      <div class="profile-bio">
-        <h4>About</h4>
-        <p>{{ profile.bio }}</p>
-      </div>
-    {% endif %}
-
-    <div class="book-section">
-      <h4>Liked Books</h4>
-      {% if profile.liked_books.all %}
-        <div class="book-grid">
-          {% for book in profile.liked_books.all %}
-            <div class="book-card">
-              <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
-              <h3>{{ book.title }}</h3>
-              <p>{{ book.author|default:'Unknown Author' }}</p>
+                <div class="book-section">
+                    <h4>Reviewed Books</h4>
+                    {% if profile.review_set.all %}
+                    <div class="book-grid">
+                        {% for review in profile.review_set.all %}
+                        <div class="book-card">
+                            <img src="{{ review.book.img_src|default:'/static/images/default-book.png' }}" alt="{{ review.book.title }}">
+                            <h3>{{ review.book.title }}</h3>
+                            <p>{{ review.book.author|default:'Unknown Author' }}</p>
+                            {% if review.rating %}
+                            <p>Rating: {{ review.rating }}/5</p>
+                            {% endif %}
+                            {% if review.review %}
+                            <p>{{ review.review|truncatewords:20 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>No reviewed books yet.</p>
+                    {% endif %}
+                </div>
             </div>
-          {% endfor %}
         </div>
-      {% else %}
-        <p>No liked books yet.</p>
-      {% endif %}
-    </div>
+    </main>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const editBioButton = document.getElementById("edit-bio");
+            const cancelBioButton = document.getElementById("cancel-bio");
+            const bioText = document.getElementById("bio-text");
+            const bioForm = document.getElementById("bio-form");
 
-    <div class="book-section">
-      <h4>Reviewed Books</h4>
-      {% if profile.review_set.all %}
-        <div class="book-grid">
-          {% for review in profile.review_set.all %}
-            <div class="book-card">
-              <img src="{{ review.book.img_src|default:'/static/images/default-book.png' }}" alt="{{ review.book.title }}">
-              <h3>{{ review.book.title }}</h3>
-              <p>{{ review.book.author|default:'Unknown Author' }}</p>
-              {% if review.rating %}
-                <p>Rating: {{ review.rating }}/5</p>
-              {% endif %}
-              {% if review.review %}
-                <p>{{ review.review|truncatewords:20 }}</p>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p>No reviewed books yet.</p>
-      {% endif %}
-    </div>
-  </div>
-</div>
-{% endblock %}
+            editBioButton.addEventListener("click", function () {
+                bioText.style.display = "none";
+                bioForm.style.display = "block";
+                editBioButton.style.display = "none";
+            });
+
+            cancelBioButton.addEventListener("click", function () {
+                bioText.style.display = "block";
+                bioForm.style.display = "none";
+                editBioButton.style.display = "inline-block";
+            });
+        });
+    </script>
+</body>
+</html>
