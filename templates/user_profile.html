@@ -97,9 +97,8 @@
                 </div>
 
                 <div class="book-section">
-                    <h4>Recommended Books based on likes</h4>
+                    <h4>Recommended Books</h4>
                     <div class="book-grid" id="rec-book-grid">
-                        Loading Recommendations...
                     </div>
                     <button id="load-more-rec" class="load-more-btn">Load More</button>
                 </div>
@@ -121,31 +120,45 @@
             const bioForm = document.getElementById("bio-form");
             const crsfToken = getCookie('csrftoken')
 
-            document.getElementById("load-more-liked").addEventListener("click", function() {
-                renderBookCards(likedBooks, "liked-book-grid", likedIndex, "load-more-liked");
-            });
+            const loadMoreLiked = document.getElementById("load-more-liked");
+            const loadMoreReview = document.getElementById("load-more-review");
+            const loadMoreRec = document.getElementById("load-more-rec");
 
-            document.getElementById("load-more-review").addEventListener("click", function() {
-                renderBookCards(reviewedBooks, "reviewed-book-grid", reviewedIndex, "load-more-review");
-            });
+            if (loadMoreLiked) {
+                loadMoreLiked.addEventListener("click", function() {
+                    renderBookCards(likedBooks, "liked-book-grid", likedIndex, "load-more-liked");
+                });
+            }
 
-            document.getElementById("load-more-rec").addEventListener("click", function() {
-                renderBookCards(recommendationList, "rec-book-grid", recIndex, "load-more-rec");
-            });
+            if (loadMoreReview) {
+                loadMoreReview.addEventListener("click", function() {
+                    renderBookCards(reviewedBooks, "reviewed-book-grid", reviewedIndex, "load-more-review");
+                });
+            }
+
+            if (loadMoreRec) {
+                loadMoreRec.addEventListener("click", function() {
+                    renderBookCards(recommendationList, "rec-book-grid", recIndex, "load-more-rec");
+                });
+            }
             
             getRecommendations(crsfToken);
 
-            editBioButton.addEventListener("click", function () {
-                bioText.style.display = "none";
-                bioForm.style.display = "block";
-                editBioButton.style.display = "none";
-            });
+            if (editBioButton) {
+                editBioButton.addEventListener("click", function () {
+                    bioText.style.display = "none";
+                    bioForm.style.display = "block";
+                    editBioButton.style.display = "none";
+                });
+            }
 
-            cancelBioButton.addEventListener("click", function () {
-                bioText.style.display = "block";
-                bioForm.style.display = "none";
-                editBioButton.style.display = "inline-block";
-            });
+            if (cancelBioButton) {
+                cancelBioButton.addEventListener("click", function () {
+                    bioText.style.display = "block";
+                    bioForm.style.display = "none";
+                    editBioButton.style.display = "inline-block";
+                });
+            }
         });
 
         async function getRecommendations(crsfToken){
@@ -166,14 +179,18 @@
 
                 const data = await response.json();
                 console.log("Recommendations:", data);
+                const recGrid = document.getElementById("rec-book-grid");
+                const loadMoreRecButton = document.getElementById("load-more-rec");
 
-                if (data.Recommendations) {
+                if (data.Recommendations && data.Recommendations.length > 0) {
                     recommendationList = data.Recommendations;
-                    const recGrid = document.getElementById("rec-book-grid");
                     currentIndex = 0;
                     recGrid.innerHTML = "";
                     console.log("Rendering Recs")
                     renderBookCards(recommendationList, "rec-book-grid", recIndex, "load-more-rec");
+                }else {
+                    recGrid.innerHTML = "<p>Like a book to get recommendations!</p>";
+                    loadMoreRecButton.style.display = "none";
                 }
             } catch (error) {
                 console.error("Error fetching recommendations:", error);
