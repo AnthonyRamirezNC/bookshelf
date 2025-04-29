@@ -554,10 +554,13 @@ function showConfirmation(message, isError = false) {
       div.className = "review-card";
 
       div.innerHTML = `
-        <div class="review-username">Username: ${review.username || "Anonymous"}</div>
+        <div class="review-username">
+          Username: <a href="/profile/${review.username}/" class="review-username-link">${review.username || "Anonymous"}</a>
+        </div>
         <div class="review-text">"${review.review}"</div>
         <div class="review-rating">Rating: ${review.rating}/5</div>
       `;
+
 
       reviewGrid.appendChild(div);
       });

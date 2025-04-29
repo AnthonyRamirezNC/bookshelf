@@ -32,27 +32,42 @@
         </a>
     </header>
     <main>
-        <div class="profile-container">
+        <div class="profile-container"
+            data-username="{{ profile.user.username }}" 
+            data-is-own-profile="{{ is_own_profile|yesno:'true,false' }}">
             <div class="profile-card">
+                {% if not is_own_profile %}
+                    <button id="follow-button" class="btn" style="display: none;">Follow</button>
+                {% endif %}
                 <h2 class="profile-name">{{ profile.display_name|default:profile.user.username }}</h2>
                 <p class="profile-email">{{ profile.user.email }}</p>
-
-                <div class="profile-bio">
-                    <h4>About</h4>
-                    {% if profile.bio %}
-                        <p id="bio-text">{{ profile.bio }}</p>
-                    {% else %}
-                        <p id="bio-text">No bio added yet.</p>
-                    {% endif %}
-                    <form id="bio-form" action="{% url 'update_bio' %}" method="POST" style="display: none;">
-                        {% csrf_token %}
-                        <textarea name="bio" id="bio-input" rows="4" placeholder="Write your bio here...">{{ profile.bio }}</textarea>
-                        <br>
-                        <button type="submit" class="btn">Save Bio</button>
-                        <button type="button" id="cancel-bio" class="btn-secondary">Cancel</button>
-                    </form>
-                    <button id="edit-bio" class="btn">Edit Bio</button>
-                </div>
+                {% if is_own_profile %}
+                    <div class="profile-bio">
+                        <h4>About</h4>
+                        {% if profile.bio %}
+                            <p id="bio-text">{{ profile.bio }}</p>
+                        {% else %}
+                            <p id="bio-text">No bio added yet.</p>
+                        {% endif %}
+                        <form id="bio-form" action="{% url 'update_bio' %}" method="POST" style="display: none;">
+                            {% csrf_token %}
+                            <textarea name="bio" id="bio-input" rows="4" placeholder="Write your bio here...">{{ profile.bio }}</textarea>
+                            <br>
+                            <button type="submit" class="btn">Save Bio</button>
+                            <button type="button" id="cancel-bio" class="btn-secondary">Cancel</button>
+                        </form>
+                        <button id="edit-bio" class="btn">Edit Bio</button>
+                    </div>
+                {% else %}
+                    <div class="profile-bio">
+                        <h4>About</h4>
+                        {% if profile.bio %}
+                            <p>{{ profile.bio }}</p>
+                        {% else %}
+                            <p>No bio added yet.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 <div class="book-section">
                     <h4>Liked Books</h4>
@@ -96,12 +111,33 @@
                     {% endif %}
                 </div>
 
-                <div class="book-section">
-                    <h4>Recommended Books</h4>
-                    <div class="book-grid" id="rec-book-grid">
+                {% if is_own_profile %}
+                    <div class="book-section">
+                        <h4>Recommended Books</h4>
+                        <div class="book-grid" id="rec-book-grid">
+                        </div>
+                        <button id="load-more-rec" class="load-more-btn">Load More</button>
                     </div>
-                    <button id="load-more-rec" class="load-more-btn">Load More</button>
+                {% endif %}
+
+                {% if is_own_profile and followed_profiles %}
+                <div class="book-section">
+                    <h4>Profiles You're Following</h4>
+                    <div class="book-grid">
+                        {% for followed in followed_profiles %}
+                        <div class="book-card" onclick="location.href='/profile/{{ followed.user.username }}/'" style="cursor: pointer;">
+                            <h3>{{ followed.display_name|default:followed.user.username }}</h3>
+                            <p>{{ followed.user.email }}</p>
+                            {% if followed.bio %}
+                                <p>{{ followed.bio|truncatewords:12 }}</p>
+                            {% else %}
+                                <p><em>No bio yet</em></p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </main>
@@ -114,6 +150,14 @@
 
         
         document.addEventListener("DOMContentLoaded", function () {
+            const container = document.querySelector(".profile-container");
+            const viewedUsername = container.dataset.username;
+            const isOwnProfile = container.dataset.isOwnProfile === "true";
+
+            if (!isOwnProfile) {
+                checkFollowStatus(viewedUsername);
+            }
+
             const editBioButton = document.getElementById("edit-bio");
             const cancelBioButton = document.getElementById("cancel-bio");
             const bioText = document.getElementById("bio-text");
@@ -158,6 +202,50 @@
                     bioForm.style.display = "none";
                     editBioButton.style.display = "inline-block";
                 });
+            }
+
+            const followButton = document.getElementById("follow-button");
+            if (followButton) {
+                followButton.addEventListener("click", async function () {
+                    try {
+                        const crsfToken = getCookie('csrftoken');
+                        const username = "{{ profile.user.username }}";  // Django template injects the correct username
+
+                        let endpoint = followButton.dataset.following === "true"
+                            ? `/unfollow/${username}/`
+                            : `/follow/${username}/`;
+
+                        const response = await fetch(endpoint, {
+                            method: "POST",
+                            headers: {
+                                "Accept": "application/json",
+                                "X-Requested-With": "XMLHttpRequest",
+                                "X-CSRFToken": crsfToken,
+                            },
+                            credentials: "same-origin",
+                        });
+
+                        if (!response.ok) {
+                            throw new Error("Failed to follow/unfollow user.");
+                        }
+
+                        const data = await response.json();
+                        console.log(data);
+
+                        if (followButton.dataset.following === "true") {
+                            followButton.textContent = "Follow";
+                            followButton.dataset.following = "false";
+                        } else {
+                            followButton.textContent = "Unfollow";
+                            followButton.dataset.following = "true";
+                        }
+                    } catch (error) {
+                        console.error("Error following/unfollowing user:", error);
+                    }
+                });
+
+                // Optional: initialize button text based on current following status
+                initializeFollowState(followButton);
             }
         });
 
@@ -244,6 +332,67 @@
         if (gridId === "reviewed-book-grid") reviewedIndex = indexTracker;
         if (gridId === "rec-book-grid") recIndex = indexTracker;
     }
+
+    async function checkFollowStatus(targetUsername) {
+        try {
+            const response = await fetch(`/profile/is-following/${targetUsername}/`, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                credentials: "same-origin"
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to check follow status");
+            }
+
+            const data = await response.json();
+            updateFollowButton(data.is_following, targetUsername);
+        } catch (error) {
+            console.error("Error checking follow status:", error);
+        }
+    }
+
+    function updateFollowButton(isFollowing, targetUsername) {
+        const button = document.getElementById("follow-button");
+        if (!button) return;
+
+        button.style.display = "inline-block";
+        button.textContent = isFollowing ? "Unfollow" : "Follow";
+        button.onclick = () => {
+            handleFollowAction(isFollowing, targetUsername);
+        };
+    }
+
+    async function handleFollowAction(isFollowing, targetUsername) {
+        const endpoint = isFollowing ? `/profile/unfollow/${targetUsername}/` : `/profile/follow/${targetUsername}/`;
+        const method = "POST";
+
+        try {
+            const response = await fetch(endpoint, {
+                method,
+                headers: {
+                    "Accept": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                credentials: "same-origin"
+            });
+
+            if (!response.ok) throw new Error("Action failed");
+
+            const data = await response.json();
+            console.log(data.detail);
+            // Refresh button
+            checkFollowStatus(targetUsername);
+        } catch (error) {
+            console.error("Error handling follow/unfollow:", error);
+        }
+    }
+
+    
 
     </script>
 </body>
