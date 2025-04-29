@@ -33,7 +33,8 @@ urlpatterns = [
     #templates
     path("", home, name="home"),
 
-    path("user/profile", profile, name="profile"),
+    path("profile/", profile, name="user-profile"),
+    path('profile/<str:username>/', profile, name='user-profile-by-username'),
     path("search-book/", search_book, name="search-book"),
 
     #Books
@@ -54,6 +55,9 @@ urlpatterns = [
     path("user/profile/create", create_user_profile, name = "create-user-profile"),
     path("user/get-profile", get_users_profile, name="get-user-profile"),
     path("update-bio/", update_bio, name="update_bio"),
+    path("follow/<str:target_username>/", follow_user, name="follow-user"),
+    path("unfollow/<str:target_username>/", unfollow_user, name="unfollow-user"),
+    path('profile/is-following/<str:target_username>/', is_following_user, name='is-following-user'),
 
     #reviews
     path("reviews/user", get_all_reviews_by_user, name="get-users-reviews"),

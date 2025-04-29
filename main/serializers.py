@@ -29,10 +29,22 @@ class BookSerializer(serializers.Serializer):
 #User Profile
 class UserProfileSerializer(serializers.ModelSerializer):
     liked_books = BookSerializer(many=True, read_only=True)
+    followed_users = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
-        fields = ["bio", "display_name", "liked_books"]
+        fields = ["bio", "display_name", "liked_books", "followed_users", "followers_count", "following_count"]
+     
+    def get_followed_users(self, obj):
+        return [user.display_name or user.user.username for user in obj.followed_users.all()]
+
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.followed_users.count()
 
 #Review
 class ReviewSerializer(serializers.ModelSerializer):

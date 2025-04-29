@@ -26,6 +26,13 @@ class UserProfile(models.Model):
     display_name = models.CharField(max_length=255, blank=True, null=True)
     liked_books = models.ManyToManyField(Book, blank=True)
     reviewed_books = models.ManyToManyField(Book, through='Review', related_name='user_reviews')
+    followed_users = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='followers',
+        blank=True
+    )
+
 
     class Meta:
         db_table = "api_user_profile"

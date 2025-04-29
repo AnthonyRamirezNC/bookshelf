@@ -34,21 +34,37 @@ def search_book(request):
     return render(request, "search_book.html")
 
 @login_required(login_url='/login/')
-def profile(request):
-    try:
-        user_profile = UserProfile.objects.get(user=request.user) 
-    except UserProfile.DoesNotExist:
-        # create and assign the created object
-        user_profile = UserProfile.objects.create(
+def profile(request, username=None):
+    # If no username passed or the username is the logged-in user's username
+    if username is None or username == request.user.username:
+        user_profile, created = UserProfile.objects.get_or_create(
             user=request.user,
-            bio="New Bio",
-            display_name=request.user.username
+            defaults={
+                "bio": "New Bio",
+                "display_name": request.user.username
+            }
         )
-        serializer = UserProfileSerializer(data=user_profile)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
+        is_own_profile = True
+    else:
+        try:
+            # Viewing someone else's profile
+            target_user = User.objects.get(username=username)
+            user_profile = UserProfile.objects.get(user=target_user)
+            is_own_profile = False
+        except User.DoesNotExist:
+            return Response({
+                "message": "User not found with that username"
+            }, 404)
+        except UserProfile.DoesNotExist:
+            return Response({
+                "message": "User profile not found for that user"
+            }, 404)
+
+    return render(request, "user_profile.html", {
+        "profile": user_profile,
+        "is_own_profile": is_own_profile,
+    })
     
-    return render(request, "user_profile.html", {"profile": user_profile})
 
 @login_required
 def update_bio(request):
@@ -505,6 +521,36 @@ def recommend_books(request):
         
 
 #User Profile endpoints
+#get User Profile based on username
+@login_required
+@extend_schema(
+tags=["User Profile"],
+responses= {
+        200: OpenApiResponse(description="external Book retrieval by title successful"),
+        400: OpenApiResponse(description="Bad Request"),
+        403: OpenApiResponse(description="Forbidden, Authentication likely not provided"),
+        404: OpenApiResponse(description="User Profile Not Found"),
+        500: OpenApiResponse(description="Internal server error"),
+    }
+) 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_users_profile_with_username(request, username):
+    try:
+        # Look up user by username (NOT request.user anymore)
+        user = User.objects.get(username=username)
+        user_profile = UserProfile.objects.get(user=user)
+
+        serialized_profile = UserProfileSerializer(user_profile)
+        return Response({
+            "message": "User Profile Found",
+            "profile_data": serialized_profile.data
+        })
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
 #get User Profile based on user
 @login_required
@@ -559,7 +605,6 @@ responses= {
 @authentication_classes([SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def like_book_with_isbn(request, isbn):
-    print("RUNNING BOOK LIKE ENDPOINT", flush=True)
     isbn = isbn.replace("-", "")
     if len(isbn) == 10:
         isbn = pyisbn.convert(isbn)
@@ -651,6 +696,77 @@ def create_user_profile(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# follow user by username
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def follow_user(request, target_username):
+    try:
+        target_user = User.objects.get(username=target_username)
+        target_profile = UserProfile.objects.get(user=target_user)
+        user_profile = UserProfile.objects.get(user=request.user)
+
+        if target_profile == user_profile:
+            return Response({'detail': "You can't follow yourself."}, status=400)
+
+        if user_profile.followed_users.filter(pk=target_profile.pk).exists():
+            return Response({'detail': "You are already following this user."}, status=400)
+
+        user_profile.followed_users.add(target_profile)
+        return Response({'detail': f"You are now following {target_username}."}, status=200)
+
+    except User.DoesNotExist:
+        return Response({'detail': 'User not found.'}, status=404)
+    except UserProfile.DoesNotExist:
+        return Response({'detail': 'Target user profile not found.'}, status=404)
+
+#unfollow a user from username
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def unfollow_user(request, target_username):
+    try:
+        target_user = User.objects.get(username=target_username)
+        target_profile = UserProfile.objects.get(user=target_user)
+        user_profile = request.user.userprofile
+
+        if target_profile == user_profile:
+            return Response({'detail': "You can't unfollow yourself."}, status=400)
+
+        if not user_profile.followed_users.filter(pk=target_profile.pk).exists():
+            return Response({'detail': "You are not following this user."}, status=400)
+
+        user_profile.followed_users.remove(target_profile)
+        return Response({'detail': f"You have unfollowed {target_username}."}, status=200)
+
+    except User.DoesNotExist:
+        return Response({'detail': 'User not found.'}, status=404)
+    except UserProfile.DoesNotExist:
+        return Response({'detail': 'Target user profile not found.'}, status=404)
+
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def is_following_user(request, target_username):
+    try:
+        target_user = User.objects.get(username=target_username)
+        target_profile = UserProfile.objects.get(user=target_user)
+        user_profile = UserProfile.objects.get(user=request.user)
+
+        is_following = user_profile.followed_users.filter(user=target_user).exists()
+
+        return Response({
+            "is_following": is_following
+        }, status=200)
+
+    except User.DoesNotExist:
+        return Response({'detail': 'User not found.'}, status=404)
+    except UserProfile.DoesNotExist:
+        return Response({'detail': 'Target user profile not found.'}, status=404)
+    
+
 
 #Review Endpoints
 
@@ -772,7 +888,6 @@ def get_all_reviews_by_isbn(request, isbn):
         username = review.user_profile.user.username
         isbn = review.book.isbn13
         review_txt = review.review
-        print("review text: " + str(review_txt), flush=True)
 
         serialized_review = UserReviewSerializer(review)
         serialized_review_data = serialized_review.data

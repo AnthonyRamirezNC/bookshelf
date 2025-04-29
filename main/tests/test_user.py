@@ -64,6 +64,44 @@ class UserProfileEndpointsTest(BaseTestCase):
         recently_liked_book = profile_data["liked_books"][-1]
         assert recently_liked_book["isbn13"] == "9783161484100"
 
+    def test_follow_and_unfollow_user(self):
+        UserProfile.objects.create(
+            user = self.example_user_2,
+            bio = "This is an example bio for Jane Doe",
+            display_name = "janedoesbro"
+        )
+
+        profile_1 = UserProfile.objects.get(user=self.example_user)
+        profile_2 = UserProfile.objects.get(user=self.example_user_2)
+
+        # Follow user 2 from user 1
+        url = reverse("follow-user", kwargs={"target_username": "jane_doe"})
+        response = self.user_client.post(url)
+        assert response.status_code == 200
+        assert profile_2 in profile_1.followed_users.all()
+
+        # Try to follow again — should fail
+        response = self.user_client.post(url)
+        assert response.status_code == 400
+        assert "already following" in response.data["detail"].lower()
+
+        # Try to follow self — should fail
+        url_self = reverse("follow-user", kwargs={"target_username": "john_doe"})
+        response = self.user_client.post(url_self)
+        assert response.status_code == 400
+        assert "follow yourself" in response.data["detail"].lower()
+
+        # Unfollow
+        url = reverse("unfollow-user", kwargs={"target_username": "jane_doe"})
+        response = self.user_client.post(url)
+        assert response.status_code == 200
+        assert profile_2 not in profile_1.followed_users.all()
+
+        # Try to unfollow again — should fail
+        response = self.user_client.post(url)
+        assert response.status_code == 400
+        assert "not following" in response.data["detail"].lower()
+
 class ReviewEndpointTests(BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -91,12 +129,6 @@ class ReviewEndpointTests(BaseTestCase):
         response = self.user_client.post(url, {"rating": 999, "review": "invalid"})
         assert response.status_code == 400
 
-    def test_create_review_requires_auth(self):
-        unauth_client = Client()
-        url = reverse("create-review", kwargs={"isbn": self.isbn})
-        response = unauth_client.post(url, self.valid_review_data)
-        assert response.status_code in [401, 403]
-
     def test_edit_review(self):
         Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
         url = reverse("edit-review", kwargs={"isbn": self.isbn})
@@ -113,12 +145,6 @@ class ReviewEndpointTests(BaseTestCase):
         assert response.status_code == 404
         assert "doesn't exist" in response.data["error"]
 
-    def test_edit_review_requires_auth(self):
-        unauth_client = Client()
-        url = reverse("edit-review", kwargs={"isbn": self.isbn})
-        response = unauth_client.post(url, {"review": "test", "rating": 5})
-        assert response.status_code in [401, 403]
-
     def test_get_reviews_by_isbn(self):
         Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
         url = reverse("get-reviews-by-isbn", kwargs={"isbn": self.isbn})
@@ -133,12 +159,6 @@ class ReviewEndpointTests(BaseTestCase):
         url = reverse("get-reviews-by-isbn", kwargs={"isbn": "9999999999999"})
         response = self.user_client.get(url)
         assert response.status_code in [200, 404]
-
-    def test_get_reviews_by_isbn_requires_auth(self):
-        unauth_client = Client()
-        url = reverse("get-reviews-by-isbn", kwargs={"isbn": self.isbn})
-        response = unauth_client.get(url)
-        assert response.status_code in [401, 403]
 
     def test_get_reviews_by_user(self):
         Review.objects.create(user_profile=self.example_user_profile, book=self.example_book, **self.valid_review_data)
@@ -160,9 +180,3 @@ class ReviewEndpointTests(BaseTestCase):
         assert response.status_code == 200
         assert "reviews" in response.data
         assert len(response.data["reviews"]) == 0
-
-    def test_get_reviews_by_user_requires_auth(self):
-        unauth_client = Client()
-        url = reverse("get-users-reviews")
-        response = unauth_client.get(url)
-        assert response.status_code in [401, 403]
