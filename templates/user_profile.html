@@ -199,7 +199,7 @@
                                 <img src="{{ review.book.img_src }}" alt="{{ review.book.title }}">
                             {% endif %}
                             <h3>{{ review.book.title }}</h3>
-                            <p>{{ review.book.author|default:'Unknown Author' }}</p>
+                            <p>{{ review.book.authors|default:'Unknown Test' }}</p>
                             {% if review.rating %}
                             <p>Rating: {{ review.rating }}/5</p>
                             {% endif %}
@@ -424,7 +424,7 @@
                 <a href="/book/${book.id}/">
                     <img src="${imgSrc}" alt="${book.title}">
                     <h3>${book.title}</h3>
-                    <p>${book.authors || "Unknown Author"}</p>
+                    <p>${(book.authors && book.authors.length > 0) ? book.authors.join(", ") : "Unknown Author"}</p>
                 </a>
                 `;
                 grid.appendChild(card);
