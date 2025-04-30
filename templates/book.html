@@ -382,7 +382,7 @@ header img {
         </div>
     </div>
 
-    <div id="review-form-section">
+    <div id="review-form-section" style="display: none;">
         <h3>Leave a Review</h3>
         <form id="review-form">
             <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
@@ -406,7 +406,9 @@ header img {
     <div class="accordion">
         <details open>
             <summary>Reviews</summary>
-            <div id="review-grid" class="review-grid"></div>
+            <div id="review-grid" class="review-grid">
+              <p id="reviews-loading">Loading reviews…</p>
+            </div>
             <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
         </details>
     </div>
@@ -749,10 +751,14 @@ function showConfirmation(message, isError = false) {
 
       if (!response.ok) {
         throw new Error('Failed to retrieve books reviews');
+        document.getElementById("review-grid").innerHTML = "<p>Could not load reviews.</p>";
       }
       
       const data = await response.json();
 
+
+      const loadingEl = document.getElementById("reviews-loading");
+      if (loadingEl) loadingEl.remove();
       renderReviews(data.reviews);
       console.log(currentUsername)
       

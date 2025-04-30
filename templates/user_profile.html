@@ -127,7 +127,10 @@
                     <button id="follow-button" class="btn" style="display: none;">Follow</button>
                 {% endif %}
                 <h2 class="profile-name">{{ profile.display_name|default:profile.user.username }}</h2>
-                <p class="profile-email">{{ profile.user.email }}</p>
+                {% if is_own_profile %}
+                    <p class="profile-email">{{ profile.user.email }}</p>
+                {% endif %}
+                
                 {% if is_own_profile %}
                     <div class="profile-bio">
                         <h4>About</h4>
@@ -216,7 +219,6 @@
                         {% for followed in followed_profiles %}
                         <div class="book-card" onclick="location.href='/profile/{{ followed.user.username }}/'" style="cursor: pointer;">
                             <h3>{{ followed.display_name|default:followed.user.username }}</h3>
-                            <p>{{ followed.user.email }}</p>
                             {% if followed.bio %}
                                 <p>{{ followed.bio|truncatewords:12 }}</p>
                             {% else %}
