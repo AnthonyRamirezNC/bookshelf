@@ -164,9 +164,17 @@
                     {% if profile.liked_books.all %}
                     <div class="book-grid" id="liked-book-grid">
                         {% for book in profile.liked_books.all %}
-                        <a href="/book/{{ book.id }}/" class="book-card">
+                        <a href="/book/{{ book.id }}/" class="book-card"
+                           data-id="{{ book.id }}"
+                           data-title="{{ book.title }}"
+                           data-authors="{{ book.authors|default:'Unknown Author' }}"
+                           data-img-src="{{ book.img_src|default:'/static/images/default-book.jpg' }}">
                             <div>
-                                <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
+                                {% if book.img_src == "Missing" %}
+                                    <img src="{% static 'images/default-book.jpg' %}" alt="{{ book.title }}">
+                                {% else %}
+                                    <img src="{{ book.img_src }}" alt="{{ book.title }}">
+                                {% endif %}
                                 <h3>{{ book.title }}</h3>
                                 <p>{{ book.authors|default:'Unknown Author' }}</p>
                             </div>
@@ -185,7 +193,11 @@
                     <div class="book-grid" id="reviewed-book-grid">
                         {% for review in profile.review_set.all %}
                         <div class="book-card">
-                            <img src="{{ review.book.img_src|default:'/static/images/default-book.png' }}" alt="{{ review.book.title }}">
+                            {% if review.book.img_src == "Missing" %}
+                                <img src="{% static 'images/default-book.jpg' %}" alt="{{ review.book.title }}">
+                            {% else %}
+                                <img src="{{ review.book.img_src }}" alt="{{ review.book.title }}">
+                            {% endif %}
                             <h3>{{ review.book.title }}</h3>
                             <p>{{ review.book.author|default:'Unknown Author' }}</p>
                             {% if review.rating %}
@@ -404,12 +416,16 @@
             booksToShow.forEach(book => {
                 const card = document.createElement("div");
                 card.className = "book-card";
+                const imgSrc = (!book.img_src || book.img_src === "Missing") 
+                ? '/static/images/default-book.jpg' 
+                : book.img_src;
+
                 card.innerHTML = `
-                    <a href="/book/${book.id}/">
-                        <img src="${book.img_src || '/static/images/default-book.png'}" alt="${book.title}">
-                        <h3>${book.title}</h3>
-                        <p>${book.authors || "Unknown Author"}</p>
-                    </a>
+                <a href="/book/${book.id}/">
+                    <img src="${imgSrc}" alt="${book.title}">
+                    <h3>${book.title}</h3>
+                    <p>${book.authors || "Unknown Author"}</p>
+                </a>
                 `;
                 grid.appendChild(card);
             });

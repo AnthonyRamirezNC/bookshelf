@@ -365,7 +365,7 @@ header img {
     <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">← Back</a>
     <div class="book-detail">
         <div class="book-cover-container">
-            <img id="book-cover" class="book-cover" src="/static/images/default-book.png" alt="Book Cover">
+            <img id="book-cover" class="book-cover" src="/static/images/loading-image.jpg" alt="Book Cover">
         </div>
         <div class="book-info">
             <h1 id="book-title" class="book-title">Loading title…</h1>
@@ -494,7 +494,10 @@ header img {
           return r.json();
         })
         .then(async (book) => {
-          coverEl.src         = book.img_src || coverEl.src;
+          coverEl.src = (!book.img_src || book.img_src === "Missing") 
+            ? "/static/images/default-book.jpg" 
+            : book.img_src;
+
           titleEl.textContent = book.title  || "Unknown Title";
           authorEl.textContent= book.authors || "Unknown Author";
           descEl.textContent  = book.description || "No description.";
@@ -657,7 +660,7 @@ function showConfirmation(message, isError = false) {
       a.className = "card";
 
       a.innerHTML = `
-        <img src="${b.img_src || '/static/images/default-book.png'}" alt="${b.title}">
+        <img src="${(!b.img_src || b.img_src === 'Missing') ? '/static/images/default-book.jpg' : b.img_src}" alt="${b.title}">
         <div class="card-content">
           <p class="card-title">${b.title}</p>
           <p class="card-authors">${b.authors || ""}</p>

@@ -12,7 +12,7 @@
   </header>
   <main>
     <div class="book-detail">
-      <img id="book-cover" class="book-cover" src="/static/images/default-book.png" alt="Book Cover">
+      <img id="book-cover" class="book-cover" src="/static/images/default-book.jpg" alt="Book Cover">
       <h1 id="book-title" class="book-title">Loading title…</h1>
       <h2 id="book-authors" class="book-authors">Loading author…</h2>
       <p id="book-description" class="book-description">Loading description…</p>
@@ -30,7 +30,7 @@
       const params = new URLSearchParams(window.location.search);
       const book = Object.fromEntries(params.entries());
 
-      document.getElementById("book-cover").src = book.img_src || "/static/images/default-book.png";
+      document.getElementById("book-cover").src = book.img_src || "/static/images/default-book.jpg";
       document.getElementById("book-title").textContent = book.title || "Unknown Title";
       document.getElementById("book-authors").textContent = book.authors || "Unknown Author";
       document.getElementById("book-description").textContent = book.description || "No description.";

@@ -54,13 +54,13 @@ def profile(request, username=None):
             is_own_profile = False
             followed_profiles = None
         except User.DoesNotExist:
-            return Response({
+            return JsonResponse({
                 "message": "User not found with that username"
-            }, 404)
+            }, status=404)
         except UserProfile.DoesNotExist:
-            return Response({
+            return JsonResponse({
                 "message": "User profile not found for that user"
-            }, 404)
+            }, status=404)
 
     return render(request, "user_profile.html", {
         "profile": user_profile,
