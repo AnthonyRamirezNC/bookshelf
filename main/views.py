@@ -76,7 +76,7 @@ def update_bio(request):
         profile, created = UserProfile.objects.get_or_create(user=request.user)
         profile.bio = bio
         profile.save()
-        return redirect("user_profile")
+        return redirect("user-profile")
 
 #helper methods
 def add_book_to_db(serialized_book):
