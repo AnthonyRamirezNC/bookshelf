@@ -110,6 +110,24 @@
     background-color: #5A5A33;
     transform: translateY(-2px);
 }
+
+.profile-card {
+  position: relative;
+}
+
+.back-arrow {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 1.2em;
+  color: #CE796B;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+.back-arrow:hover {
+  color: #A65A4A;
+}
     </style>
 </head>
 <body>
@@ -119,10 +137,14 @@
         </a>
     </header>
     <main>
+
         <div class="profile-container"
             data-username="{{ profile.user.username }}" 
             data-is-own-profile="{{ is_own_profile|yesno:'true,false' }}">
             <div class="profile-card">
+                <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">
+                    ← Back
+                </a>
                 {% if not is_own_profile %}
                     <button id="follow-button" class="btn" style="display: none;">Follow</button>
                 {% endif %}
