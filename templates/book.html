@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Book Details</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
   <style>
     :root {
       --bg:      #F9F3F0;
@@ -361,6 +363,33 @@ header img {
     <a href="/">
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
     </a>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="/#section-fiction">Fiction</a></li>
+            <li><a href="/#section-nonfiction">Non-Fiction</a></li>
+            <li><a href="/#section-classic">Classics</a></li>
+            <li><a href="/#section-scifi">Sci-Fi</a></li>
+            <li><a href="/#section-fantasy">Fantasy</a></li>
+            <li><a href="/#section-mystery">Mystery</a></li>
+            <li><a href="/#section-romance">Romance</a></li>
+            <li><a href="/#section-horror">Horror</a></li>
+            <li><a href="/#section-biography">Biography</a></li>
+            <li><a href="/#section-history">History</a></li>
+            <li><a href="/#section-child-lit">Youth</a></li>
+            <li><a href="/#section-thriller">Thriller</a></li>
+            <li><a href="/#section-health">Health</a></li>
+        </ul>
+            <div class="auth-links">
+                {% if user.is_authenticated %}
+                    <a href="/profile">Profile</a>
+                    <a href="/logout">Logout</a>
+                {% else %}
+                    <a href="/login/">Login</a>
+                    <a href="/register/">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 </header>
 <div class="container">
     <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">← Back</a>
