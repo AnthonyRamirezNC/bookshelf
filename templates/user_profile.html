@@ -162,44 +162,58 @@
                 <div class="book-section">
                     <h4>Liked Books</h4>
                     {% if profile.liked_books.all %}
-                    <div class="book-grid" id="liked-book-grid">
+                      <div class="book-grid" id="liked-book-grid">
                         {% for book in profile.liked_books.all %}
-                        <a href="/book/{{ book.id }}/" class="book-card"
-                           data-id="{{ book.id }}"
-                           data-title="{{ book.title }}"
-                           data-authors="{{ book.authors|default:'Unknown Author' }}"
-                           data-img-src="{{ book.img_src|default:'/static/images/default-book.jpg' }}">
-                            <div>
-                                {% if book.img_src == "Missing" %}
-                                    <img src="{% static 'images/default-book.jpg' %}" alt="{{ book.title }}">
+                          <div
+                            class="book-card"
+                            role="link" tabindex="0"
+                            onclick="window.location.href='/book/{{ book.id }}/';"
+                            onkeypress="if (event.key==='Enter') window.location.href='/book/{{ book.id }}/';"
+                          >
+                            {% if book.img_src == "Missing" %}
+                              <img src="{% static 'images/default-book.jpg' %}" alt="{{ book.title }}">
+                            {% else %}
+                              <img src="{{ book.img_src }}" alt="{{ book.title }}">
+                            {% endif %}
+                            <h3>{{ book.title }}</h3>
+                            <p>
+                                {% if book.authors %}
+                                    {{ book.authors|join:", " }}
                                 {% else %}
-                                    <img src="{{ book.img_src }}" alt="{{ book.title }}">
+                                    Unknown Author
                                 {% endif %}
-                                <h3>{{ book.title }}</h3>
-                                <p>{{ book.authors|default:'Unknown Author' }}</p>
-                            </div>
-                        </a>
+                            </p>
+                          </div>
                         {% endfor %}
-                    </div>
-                    <button id="load-more-liked" class="load-more-btn">Load More</button>
+                      </div>
+                      <button id="load-more-liked" class="load-more-btn">Load More</button>
                     {% else %}
-                    <p>No liked books yet.</p>
+                      <p>No liked books yet.</p>
                     {% endif %}
-                </div>
+                  </div>
 
                 <div class="book-section">
                     <h4>Reviewed Books</h4>
                     {% if profile.review_set.all %}
                     <div class="book-grid" id="reviewed-book-grid">
                         {% for review in profile.review_set.all %}
-                        <div class="book-card">
+                        <div 
+                        class="book-card"
+                        onclick="window.location.href='/book/{{ review.book.id }}/';"
+                        >
                             {% if review.book.img_src == "Missing" %}
                                 <img src="{% static 'images/default-book.jpg' %}" alt="{{ review.book.title }}">
                             {% else %}
                                 <img src="{{ review.book.img_src }}" alt="{{ review.book.title }}">
                             {% endif %}
                             <h3>{{ review.book.title }}</h3>
-                            <p>{{ review.book.authors|default:'Unknown Test' }}</p>
+                            <p>
+                                {% if review.book.authors %}
+                                  {{ review.book.authors|join:", " }}
+                                {% else %}
+                                  Unknown Author
+                                {% endif %}
+                            </p>
                             {% if review.rating %}
                             <p>Rating: {{ review.rating }}/5</p>
                             {% endif %}
@@ -347,9 +361,32 @@
                     }
                 });
 
-                // Optional: initialize button text based on current following status
                 initializeFollowState(followButton);
             }
+
+            function setupPagination(gridId, buttonId) {
+            const cards = Array.from(document.querySelectorAll(`#${gridId} .book-card`));
+            let idx = booksPerPage;
+
+            cards.forEach((card, i) => {
+                card.style.display = i < booksPerPage ? 'block' : 'none';
+            });
+
+            const btn = document.getElementById(buttonId);
+            btn.style.display = cards.length > booksPerPage ? 'block' : 'none';
+
+            btn.addEventListener('click', () => {
+                cards.slice(idx, idx + booksPerPage)
+                    .forEach(c => c.style.display = 'block');
+                idx += booksPerPage;
+
+                if (idx >= cards.length) btn.style.display = 'none';
+            });
+            }
+
+            setupPagination('liked-book-grid',  'load-more-liked');
+            setupPagination('reviewed-book-grid','load-more-review');
+
         });
 
         async function getRecommendations(crsfToken){
@@ -415,18 +452,23 @@
 
             booksToShow.forEach(book => {
                 const card = document.createElement("div");
+                card.onclick   = () => window.location.href = `/book/${book.id}/`;
                 card.className = "book-card";
+                
                 const imgSrc = (!book.img_src || book.img_src === "Missing") 
                 ? '/static/images/default-book.jpg' 
                 : book.img_src;
 
                 card.innerHTML = `
-                <a href="/book/${book.id}/">
                     <img src="${imgSrc}" alt="${book.title}">
                     <h3>${book.title}</h3>
-                    <p>${(book.authors && book.authors.length > 0) ? book.authors.join(", ") : "Unknown Author"}</p>
-                </a>
+                    <p>${
+                        (book.authors && book.authors.length)
+                        ? book.authors.join(", ")
+                        : "Unknown Author"
+                    }</p>
                 `;
+
                 grid.appendChild(card);
             });
 
