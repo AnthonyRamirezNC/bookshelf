@@ -460,7 +460,7 @@
         }
 
         async function handleFollowAction(isFollowing, targetUsername) {
-            const endpoint = isFollowing ? `/profile/unfollow/${targetUsername}/` : `/profile/follow/${targetUsername}/`;
+            const endpoint = isFollowing ? `/unfollow/${targetUsername}/` : `/follow/${targetUsername}/`;
             const method = "POST";
 
             try {
