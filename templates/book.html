@@ -14,211 +14,345 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text2);
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text2);
     }
+
     .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #fff;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
+    .back-arrow {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 1.5em;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+    }
+
+    .back-arrow:hover {
+        color: var(--muted);
+    }
+
     .book-detail {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 20px;
+        align-items: flex-start;
     }
+
     .book-cover-container {
-      flex: 1 1 200px;
+        flex: 1 1 40%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
     }
+
     .book-cover {
-      width: 100%;
-      display: block;
-      border-radius: 5px;
+        width: 100%;
+        max-width: 300px;
+        border-radius: 5px;
+        margin-top: 30px;
     }
+
     .book-info {
-      flex: 2 1 300px;
+        flex: 1 1 60%;
+        margin-top: 0;
     }
+
     .book-title {
-      font-size: 2em;
-      color: var(--muted);
-      margin: 0 0 10px;
+        font-size: 2em;
+        color: var(--muted);
+        margin: 0 0 10px;
     }
+
     .book-authors {
-      font-size: 1.2em;
-      color: var(--text1);
-      margin: 0 0 20px;
+        font-size: 1.2em;
+        color: var(--text1);
+        margin: 0 0 20px;
     }
+
     .book-description {
-      font-size: 1em;
-      line-height: 1.5;
-      margin: 0 0 20px;
+        font-size: 1em;
+        line-height: 1.5;
+        margin: 0 0 20px;
     }
+
     .book-meta {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      font-size: 0.9em;
-      color: var(--text1);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 0.9em;
+        color: var(--text1);
     }
+
     .book-meta div strong {
-      color: var(--muted);
+        color: var(--muted);
+    }
+
+    #review-form-section {
+        margin-top: 30px;
+        padding: 20px;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #review-form-section h3 {
+        font-size: 1.5em;
+        color: var(--muted);
+        margin-bottom: 15px;
+    }
+
+    #review-form textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid var(--accent);
+        border-radius: 5px;
+        resize: none;
+        margin-bottom: 15px;
+    }
+
+    #review-form label {
+        font-size: 1em;
+        color: var(--text1);
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    #review-form select {
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid var(--accent);
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+
+    #review-form button {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #CE796B;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #review-form button:hover {
+        background-color: #A65A4A;
+        transform: translateY(-2px);
     }
 
     .accordion {
-      margin-top: 30px;
-      border-top: 1px solid var(--accent);
-      padding-top: 20px;
+        margin-top: 30px;
+        border-top: 1px solid var(--accent);
+        padding-top: 20px;
     }
+
     .accordion summary {
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--muted);
-      list-style: none;
+        font-size: 1.2em;
+        font-weight: bold;
+        cursor: pointer;
+        color: var(--muted);
+        list-style: none;
+        margin-bottom: 10px;
     }
+
     .accordion summary::-webkit-details-marker {
-      display: none;
+        display: none;
     }
+
+    a {
+      color: var(--accent); 
+        text-decoration: underline;
+        transition: color 0.3s ease;
+    }
+
+    a:hover {
+        color: var(--muted); 
+    }
+
     .accordion summary:before {
-      content: "▶";
-      display: inline-block;
-      margin-right: 8px;
-      transition: transform 0.2s;
+        content: "▶";
+        display: inline-block;
+        margin-right: 8px;
+        transition: transform 0.2s;
     }
+
     .accordion[open] summary:before {
-      transform: rotate(90deg);
+        transform: rotate(90deg);
     }
-    .cards-grid {
-      margin-top: 15px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
-      gap: 15px;
-    }
-    .card {
-      background: #fff;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-    }
-    .card img {
-      width: 100%;
-      display: block;
-    }
-    .card-content {
-      padding: 10px;
-      flex-grow: 1;
-    }
-    .card-title {
-      font-size: 1em;
-      color: var(--muted);
-      margin: 0 0 5px;
-    }
-    .card-authors {
-      font-size: 0.9em;
-      color: var(--text1);
-      margin: 0;
-    }
+
     .review-grid {
-      margin-top: 15px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
+        margin-top: 15px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
     }
 
     .review-card {
-      background: #fff;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 15px;
-      font-size: 0.95em;
-      color: var(--text2);
-      display: flex;
-      flex-direction: column;
+        background: #fff;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        font-size: 0.95em;
+        color: var(--text2);
+        display: flex;
+        flex-direction: column;
     }
 
     .review-username {
-      font-weight: bold;
-      color: var(--muted);
-      margin-bottom: 8px;
+        font-weight: bold;
+        color: var(--muted);
+        margin-bottom: 8px;
     }
 
     .review-text {
-      font-style: italic;
-      margin-bottom: 10px;
-      flex-grow: 1;
+        font-style: italic;
+        margin-bottom: 10px;
+        flex-grow: 1;
     }
 
     .review-rating {
-      font-weight: bold;
-      color: var(--text1);
-    }
-    .load-more-btn {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    font-size: 16px;
-    color: #fff;
-    background-color: #CE796B;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+        font-weight: bold;
+        color: var(--text1);
     }
 
+    .load-more-btn {
+        display: block;
+        margin: 15px auto;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #CE796B;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        display: block;
+        text-align: center;
+    }
+    .load-more-btn:hover {
+        background-color: #A65A4A;
+        transform: translateY(-2px);
+    } 
+    .like-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #CE796B;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .like-btn:hover {
+        background-color: #A65A4A;
+        transform: translateY(-2px);
+    }
+    #recommendation-grid {
+        display: flex; 
+        flex-wrap: wrap;
+        gap: 15px; 
+        justify-content: flex-start;
+    }
+    .card {
+        flex: 0 1 calc(20% - 15px); 
+        max-width: 200px;
+        text-align: center;
+        background: #fff;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.2s ease;
+        margin-bottom: 10px;
+    }
+    .card img {
+        width: 100%;
+        height: auto;
+        border-bottom: 1px solid var(--accent);
+    }
+    .card-content {
+        padding: 10px;
+    }
+    .card-title {
+        font-size: 1em;
+        font-weight: bold;
+        color: var(--muted);
+        margin: 5px 0;
+    }
+    .card-authors {
+        font-size: 0.9em;
+        color: var(--text1);
+    }
     
-.like-btn {
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 16px;
-    color: #FFFFFF;
-    background-color: #CE796B; 
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    .card:hover {
+        transform: translateY(-5px); 
+    }
+    header {
+    background-color: #F9F3F0;
+    border-bottom: 2px solid #CE796B;
+    padding: 20px;
     text-align: center;
 }
-
-.like-btn:hover {
-    background-color: #A65A4A; 
-    transform: translateY(-2px); 
+header img {
+    height: 190px;
 }
-
-.like-btn:disabled {
-    background-color: #D3D3D3;
-    cursor: not-allowed;
-}
-
-    @media (max-width: 600px) {
-      .book-detail {
-        flex-direction: column;
-      }
+.popup-message {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background-color: var(--accent); 
+        color: #fff;
+        font-size: 1em;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: fadeInOut 4s ease-in-out; 
     }
 
-    header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0;
-}
+    .popup-message.error {
+        background-color: #FF6B6B; 
+    }
 
-header img {
-  max-width: 190px; 
-  height: auto;
-}
+    @keyframes fadeInOut {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        10%, 90% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    }
   </style>
 </head>
 <body>
@@ -226,68 +360,65 @@ header img {
     <a href="/">
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
     </a>
-    </header>
-  <div class="container">
+</header>
+<div class="container">
+    <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">← Back</a>
     <div class="book-detail">
-      <div class="book-cover-container">
-        <img id="book-cover" class="book-cover"
-             src="/static/images/default-book.png"
-             alt="Book Cover">
-      </div>
-      <div class="book-info">
-        <h1 id="book-title" class="book-title">Loading title…</h1>
-        <h2 id="book-authors" class="book-authors">Loading author…</h2>
-        <p id="book-description" class="book-description">
-          Loading description…
-        </p>
-        <div class="book-meta">
-          <div><strong>Genre:</strong> <span id="book-genres">—</span></div>
-          <div><strong>Language:</strong> <span id="book-language">—</span></div>
-          <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
-          <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
-          <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
-          <button id="like-button" class="like-btn">Like Book</button>
+        <div class="book-cover-container">
+            <img id="book-cover" class="book-cover" src="/static/images/default-book.png" alt="Book Cover">
         </div>
-      </div>
+        <div class="book-info">
+            <h1 id="book-title" class="book-title">Loading title…</h1>
+            <h2 id="book-authors" class="book-authors">Loading author…</h2>
+            <p id="book-description" class="book-description">Loading description…</p>
+            <div class="book-meta">
+                <div><strong>Genre:</strong> <span id="book-genres">—</span></div>
+                <div><strong>Language:</strong> <span id="book-language">—</span></div>
+                <div><strong>Pages:</strong> <span id="book-page-count">—</span></div>
+                <div><strong>Publisher:</strong> <span id="book-publisher">—</span></div>
+                <div><strong>Published:</strong> <span id="book-publication-date">—</span></div>
+                <button id="like-button" class="like-btn">Like Book</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="review-form-section">
+        <h3>Leave a Review</h3>
+        <form id="review-form">
+            <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
+            <label for="rating">Rating:</label>
+            <select name="rating" id="rating" required>
+                <option value="">Select rating</option>
+                <option value="1">1 ⭐</option>
+                <option value="2">2 ⭐⭐</option>
+                <option value="3">3 ⭐⭐⭐</option>
+                <option value="4">4 ⭐⭐⭐⭐</option>
+                <option value="5">5 ⭐⭐⭐⭐⭐</option>
+            </select>
+            <button type="submit">Submit Review</button>
+        </form>
+    </div>
+
+    <div id="login-message" style="display: none;">
+        <p><a href="/login/">Login</a> to leave a review!</p>
     </div>
 
     <div class="accordion">
-      <details open>
-        <summary>More in this Genre</summary>
-        <div id="recommendation-grid" class="cards-grid">Loading Results, May Take A Few Seconds</div>
-        <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
-      </details>
+        <details open>
+            <summary>Reviews</summary>
+            <div id="review-grid" class="review-grid"></div>
+            <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
+        </details>
     </div>
+
     <div class="accordion">
-      <details open>
-        <summary>Reviews</summary>
-        <div id="review-grid" class="review-grid"></div>
-        <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
-      </details>
+        <details open>
+            <summary>More in this Genre</summary>
+            <div id="recommendation-grid" class="cards-grid">Loading Results, May Take A Few Seconds</div>
+            <button id="load-more-recs" class="load-more-btn" style="display: none;">Load More</button>
+        </details>
     </div>
-    
-    <div id="review-form-section" style="display: none;">
-      <h3>Leave a Review</h3>
-      <form id="review-form">
-          <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
-          <br>
-          <label for="rating">Rating:</label>
-          <select name="rating" id="rating" required>
-              <option value="">Select rating</option>
-              <option value="1">1 ⭐</option>
-              <option value="2">2 ⭐⭐</option>
-              <option value="3">3 ⭐⭐⭐</option>
-              <option value="4">4 ⭐⭐⭐⭐</option>
-              <option value="5">5 ⭐⭐⭐⭐⭐</option>
-          </select>
-          <br><br>
-          <button type="submit">Submit Review</button>
-      </form>
-    </div>
-    <div id="login-message" style="display: none;">
-      <p><a href="/login/">Login</a> to leave a review!</p>
-    </div>
-  </div>
+</div>
 
   <script>
     let recommendationList = [];
@@ -439,20 +570,16 @@ header img {
 function showConfirmation(message, isError = false) {
     const confirmation = document.createElement("div");
     confirmation.textContent = message;
-    confirmation.style.position = "fixed";
-    confirmation.style.bottom = "20px";
-    confirmation.style.right = "20px";
-    confirmation.style.padding = "10px 20px";
-    confirmation.style.backgroundColor = isError ? "#FF6B6B" : "#4CAF50";
-    confirmation.style.color = "#FFFFFF";
-    confirmation.style.borderRadius = "5px";
-    confirmation.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
-    confirmation.style.zIndex = "1000";
+    confirmation.className = "popup-message";
+    if (isError) {
+        confirmation.classList.add("error");
+    }
+
     document.body.appendChild(confirmation);
 
     setTimeout(() => {
         confirmation.remove();
-    }, 3000);
+    }, 4000); 
 }
 
       reviewForm.addEventListener("submit", async function (event) {

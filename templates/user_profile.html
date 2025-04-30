@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
         .profile-bio textarea {
-    width: 100%;
+    width: 95%;
     padding: 10px;
     font-size: 14px;
     border: 1px solid #CE796B;
@@ -22,6 +22,93 @@
 
 .profile-bio .btn-secondary {
     margin-left: 10px;
+}
+
+
+.profile-bio {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #CE796B;
+    border-radius: 8px;
+    background-color: #F9F3F0;
+}
+
+.profile-bio h4 {
+    margin-bottom: 10px;
+    color: #CE796B;
+    font-size: 1.5em;
+}
+
+.profile-bio p {
+    margin: 0;
+    font-size: 1em;
+    color: #333;
+}
+
+
+#edit-bio {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#edit-bio:hover {
+    background-color: #A65A4A;
+    transform: translateY(-2px);
+}
+
+.profile-name {
+    font-size: 2em;
+    color: #5F758E;
+    margin-bottom: 5px;
+}
+
+.profile-email {
+    font-size: 1.2em;
+    color: #717744;
+    margin-bottom: 20px;
+}
+
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #CE796B;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #A65A4A;
+    transform: translateY(-2px);
+}
+
+
+.btn-secondary {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #717744;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #5A5A33;
+    transform: translateY(-2px);
 }
     </style>
 </head>
@@ -74,11 +161,13 @@
                     {% if profile.liked_books.all %}
                     <div class="book-grid" id="liked-book-grid">
                         {% for book in profile.liked_books.all %}
-                        <div class="book-card">
-                            <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
-                            <h3>{{ book.title }}</h3>
-                            <p>{{ book.authors|default:'Unknown Author' }}</p>
-                        </div>
+                        <a href="/book/{{ book.id }}/" class="book-card">
+                            <div>
+                                <img src="{{ book.img_src|default:'/static/images/default-book.png' }}" alt="{{ book.title }}">
+                                <h3>{{ book.title }}</h3>
+                                <p>{{ book.authors|default:'Unknown Author' }}</p>
+                            </div>
+                        </a>
                         {% endfor %}
                     </div>
                     <button id="load-more-liked" class="load-more-btn">Load More</button>
@@ -148,7 +237,7 @@
         let reviewedBooks = [];
         let likedBooks = [];
 
-        
+
         document.addEventListener("DOMContentLoaded", function () {
             const container = document.querySelector(".profile-container");
             const viewedUsername = container.dataset.username;
@@ -306,93 +395,95 @@
         let recIndex = 0;
 
         function renderBookCards(books, gridId, indexTracker, buttonId) {
-        const grid = document.getElementById(gridId);
-        const button = document.getElementById(buttonId);
-        const booksToShow = books.slice(indexTracker, indexTracker + booksPerPage);
+            const grid = document.getElementById(gridId);
+            const button = document.getElementById(buttonId);
+            const booksToShow = books.slice(indexTracker, indexTracker + booksPerPage);
 
-        booksToShow.forEach(book => {
-            const card = document.createElement("div");
-            card.className = "book-card";
-            card.innerHTML = `
-                <img src="${book.img_src || '/static/images/default-book.png'}" alt="${book.title}">
-                <h3>${book.title}</h3>
-                <p>${book.authors || "Unknown Author"}</p>
-            `;
-            card.addEventListener("click", () => {
-                if (book.id) window.location.href = `/book/${book.id}/`;
-            });
-            grid.appendChild(card);
-        });
-
-        indexTracker += booksPerPage;
-        if (indexTracker >= books.length) button.style.display = "none";
-        else button.style.display = "block";
-
-        if (gridId === "liked-book-grid") likedIndex = indexTracker;
-        if (gridId === "reviewed-book-grid") reviewedIndex = indexTracker;
-        if (gridId === "rec-book-grid") recIndex = indexTracker;
-    }
-
-    async function checkFollowStatus(targetUsername) {
-        try {
-            const response = await fetch(`/profile/is-following/${targetUsername}/`, {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin"
+            booksToShow.forEach(book => {
+                const card = document.createElement("div");
+                card.className = "book-card";
+                card.innerHTML = `
+                    <a href="/book/${book.id}/">
+                        <img src="${book.img_src || '/static/images/default-book.png'}" alt="${book.title}">
+                        <h3>${book.title}</h3>
+                        <p>${book.authors || "Unknown Author"}</p>
+                    </a>
+                `;
+                grid.appendChild(card);
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to check follow status");
+
+            indexTracker += booksToShow.length;
+
+            if (indexTracker >= books.length) {
+                button.style.display = "none";
+            } else {
+                button.style.display = "block";
             }
 
-            const data = await response.json();
-            updateFollowButton(data.is_following, targetUsername);
-        } catch (error) {
-            console.error("Error checking follow status:", error);
+            if (gridId === "liked-book-grid") likedIndex = indexTracker;
+            if (gridId === "reviewed-book-grid") reviewedIndex = indexTracker;
+            if (gridId === "rec-book-grid") recIndex = indexTracker;
         }
-    }
 
-    function updateFollowButton(isFollowing, targetUsername) {
-        const button = document.getElementById("follow-button");
-        if (!button) return;
+        async function checkFollowStatus(targetUsername) {
+            try {
+                const response = await fetch(`/profile/is-following/${targetUsername}/`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin"
+                });
 
-        button.style.display = "inline-block";
-        button.textContent = isFollowing ? "Unfollow" : "Follow";
-        button.onclick = () => {
-            handleFollowAction(isFollowing, targetUsername);
-        };
-    }
+                if (!response.ok) {
+                    throw new Error("Failed to check follow status");
+                }
 
-    async function handleFollowAction(isFollowing, targetUsername) {
-        const endpoint = isFollowing ? `/profile/unfollow/${targetUsername}/` : `/profile/follow/${targetUsername}/`;
-        const method = "POST";
-
-        try {
-            const response = await fetch(endpoint, {
-                method,
-                headers: {
-                    "Accept": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
-                    "X-Requested-With": "XMLHttpRequest"
-                },
-                credentials: "same-origin"
-            });
-
-            if (!response.ok) throw new Error("Action failed");
-
-            const data = await response.json();
-            console.log(data.detail);
-            // Refresh button
-            checkFollowStatus(targetUsername);
-        } catch (error) {
-            console.error("Error handling follow/unfollow:", error);
+                const data = await response.json();
+                updateFollowButton(data.is_following, targetUsername);
+            } catch (error) {
+                console.error("Error checking follow status:", error);
+            }
         }
-    }
 
-    
+        function updateFollowButton(isFollowing, targetUsername) {
+            const button = document.getElementById("follow-button");
+            if (!button) return;
+
+            button.style.display = "inline-block";
+            button.textContent = isFollowing ? "Unfollow" : "Follow";
+            button.onclick = () => {
+                handleFollowAction(isFollowing, targetUsername);
+            };
+        }
+
+        async function handleFollowAction(isFollowing, targetUsername) {
+            const endpoint = isFollowing ? `/profile/unfollow/${targetUsername}/` : `/profile/follow/${targetUsername}/`;
+            const method = "POST";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        "Accept": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    credentials: "same-origin"
+                });
+
+                if (!response.ok) throw new Error("Action failed");
+
+                const data = await response.json();
+                console.log(data.detail);
+                // Refresh button
+                checkFollowStatus(targetUsername);
+            } catch (error) {
+                console.error("Error handling follow/unfollow:", error);
+            }
+        }
 
     </script>
 </body>
