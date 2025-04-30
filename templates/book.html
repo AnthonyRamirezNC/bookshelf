@@ -288,6 +288,7 @@
         overflow: hidden;
         transition: transform 0.2s ease;
         margin-bottom: 10px;
+        text-decoration: none;
     }
     .card img {
         width: 100%;
@@ -624,7 +625,6 @@ function showConfirmation(message, isError = false) {
           const data = await response.json();
           console.log('Review submitted:', data);
 
-          alert("Review submitted successfully!");
           location.reload();
         } catch (error) {
           console.error('Error submitting review:', error);
