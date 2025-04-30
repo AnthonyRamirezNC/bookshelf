@@ -152,10 +152,6 @@
                 <li><a href="/#section-health">Health</a></li>
             </ul>
             <div class="nav-actions">
-                <form class="search-form">
-                    <input type="text" name="title" placeholder="Search books..." required>
-                    <button type="submit">Search</button>
-                </form>
                 <div class="auth-links">
                     {% if user.is_authenticated %}
                         <a href="/profile">Profile</a>
@@ -225,7 +221,7 @@
                             onkeypress="if (event.key==='Enter') window.location.href='/book/{{ book.id }}/';"
                           >
                             {% if book.img_src == "Missing" %}
-                              <img src="{% static 'images/default-book.jpg' %}" alt="{{ book.title }}">
+                              <img src="{% static 'images/image-not-available.svg' %}" alt="{{ book.title }}">
                             {% else %}
                               <img src="{{ book.img_src }}" alt="{{ book.title }}">
                             {% endif %}
@@ -256,7 +252,7 @@
                         onclick="window.location.href='/book/{{ review.book.id }}/';"
                         >
                             {% if review.book.img_src == "Missing" %}
-                                <img src="{% static 'images/default-book.jpg' %}" alt="{{ review.book.title }}">
+                                <img src="{% static 'images/image-not-available.svg' %}" alt="{{ review.book.title }}">
                             {% else %}
                                 <img src="{{ review.book.img_src }}" alt="{{ review.book.title }}">
                             {% endif %}
@@ -510,7 +506,7 @@
                 card.className = "book-card";
                 
                 const imgSrc = (!book.img_src || book.img_src === "Missing") 
-                ? '/static/images/default-book.jpg' 
+                ? '/static/images/image-not-available.svg' 
                 : book.img_src;
 
                 card.innerHTML = `

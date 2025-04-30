@@ -217,7 +217,7 @@
             booksToLoad.forEach(book => {
                 let imgSrc = book.img_src;
                 if (!imgSrc || imgSrc === "Missing") {
-                    imgSrc = "/static/images/default-book.jpg";
+                    imgSrc = "/static/images/image-not-available.svg";
                 }
                 const bookCard = document.createElement("div");
                 bookCard.className = "book-card";
@@ -254,7 +254,7 @@
             booksToLoad.forEach(book => {
                 let imgSrc = book.img_src;
                 if (!imgSrc || imgSrc === "Missing") {
-                    imgSrc = "/static/images/default-book.jpg";
+                    imgSrc = "/static/images/image-not-available.svg";
                 }
                 const bookCard = document.createElement("div");
                 bookCard.className = "book-card";
