@@ -37,6 +37,7 @@
     margin-bottom: 10px;
     color: #CE796B;
     font-size: 1.5em;
+    margin-top: auto;
 }
 
 .profile-bio p {
@@ -64,15 +65,20 @@
 }
 
 .profile-name {
+    display: flex;
+    justify-content: space-between;
     font-size: 2em;
-    color: #5F758E;
+    color: #717744;
     margin-bottom: 5px;
+    align-items: center;
+    gap: 10px;
 }
 
 .profile-email {
     font-size: 1.2em;
     color: #717744;
     margin-bottom: 20px;
+    text-align: left;
 }
 
 
@@ -173,10 +179,12 @@
                 <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">
                     ← Back
                 </a>
-                {% if not is_own_profile %}
-                    <button id="follow-button" class="btn" style="display: none;">Follow</button>
-                {% endif %}
-                <h2 class="profile-name">{{ profile.display_name|default:profile.user.username }}</h2>
+                <h2 class="profile-name">
+                    {{ profile.display_name|default:profile.user.username }}
+                    {% if not is_own_profile %}
+                        <button id="follow-button" class="btn" style="display: none;">Follow</button>
+                    {% endif %}
+                </h2>
                 {% if is_own_profile %}
                     <p class="profile-email">{{ profile.user.email }}</p>
                 {% endif %}
