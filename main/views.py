@@ -31,7 +31,7 @@ def book_detail(request, book_id):
     return render(request, "book.html", {"book_id": book_id})
 
 def search_book(request):
-    return render(request, "search_book.html")
+    return render(request, "search-book.html")
 
 @login_required(login_url='/login/')
 def profile(request, username=None):
@@ -54,13 +54,13 @@ def profile(request, username=None):
             is_own_profile = False
             followed_profiles = None
         except User.DoesNotExist:
-            return Response({
+            return JsonResponse({
                 "message": "User not found with that username"
-            }, 404)
+            }, status=404)
         except UserProfile.DoesNotExist:
-            return Response({
+            return JsonResponse({
                 "message": "User profile not found for that user"
-            }, 404)
+            }, status=404)
 
     return render(request, "user_profile.html", {
         "profile": user_profile,
@@ -637,6 +637,19 @@ def like_book_with_isbn(request, isbn):
     user_profile.liked_books.add(book)
 
     return Response({"message": "Book liked!"})
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def is_book_liked(request, isbn):
+    isbn = isbn.replace('-', '')
+    try:
+        book = Book.objects.get(isbn13=isbn)
+    except Book.DoesNotExist:
+        return Response({"is_liked": False})
+    user_profile = UserProfile.objects.get(user=request.user)
+    liked = user_profile.liked_books.filter(pk=book.pk).exists()
+    return Response({"is_liked": liked})
 
 @login_required
 @extend_schema(

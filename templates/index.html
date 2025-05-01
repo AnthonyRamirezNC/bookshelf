@@ -215,23 +215,25 @@
             const booksToLoad = books.slice(currentIndex, currentIndex + booksPerPage);
 
             booksToLoad.forEach(book => {
-                if (book.img_src) {
-                    const bookCard = document.createElement("div");
-                    bookCard.className = "book-card";
-                    bookCard.innerHTML = `
-                        <div>
-                            <img src="${book.img_src}" alt="${book.title}">
-                            <h3>${book.title}</h3>
-                            <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
-                        </div>
-                    `;
-                    bookCard.addEventListener("click", function () {
-                        if (book.id) {
-                            window.location.href = `/book/${book.id}/`;
-                        }
-                    });
-                    grid.appendChild(bookCard);
+                let imgSrc = book.img_src;
+                if (!imgSrc || imgSrc === "Missing") {
+                    imgSrc = "/static/images/image-not-available.svg";
                 }
+                const bookCard = document.createElement("div");
+                bookCard.className = "book-card";
+                bookCard.innerHTML = `
+                    <div>
+                        <img src="${imgSrc}" alt="${book.title}">
+                        <h3>${book.title}</h3>
+                        <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
+                    </div>
+                `;
+                bookCard.addEventListener("click", function () {
+                    if (book.id) {
+                        window.location.href = `/book/${book.id}/`;
+                    }
+                });
+                grid.appendChild(bookCard);
             });
 
             currentIndexByGenre[genre] += booksPerPage;
@@ -250,26 +252,28 @@
             }
             const booksToLoad = books.slice(currentIndex, currentIndex + booksPerPage);
             booksToLoad.forEach(book => {
-                if (book.img_src) {
-                    const bookCard = document.createElement("div");
-                    bookCard.className = "book-card";
-                    bookCard.innerHTML = `
-                        <div>
-                            <img src="${book.img_src}" alt="${book.title}">
-                            <h3>${book.title}</h3>
-                            <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
-                        </div>
-                    `;
-                    bookCard.addEventListener("click", function () {
-                        if (book.id) {
-                            window.location.href = `/book/${book.id}/`;
-                        } else {
-                            const queryParams = new URLSearchParams(book).toString();
-                            window.location.href = `/search-book/?${queryParams}`;
-                        }
-                    });
-                    searchBookGrid.appendChild(bookCard);
+                let imgSrc = book.img_src;
+                if (!imgSrc || imgSrc === "Missing") {
+                    imgSrc = "/static/images/image-not-available.svg";
                 }
+                const bookCard = document.createElement("div");
+                bookCard.className = "book-card";
+                bookCard.innerHTML = `
+                    <div>
+                        <img src="${imgSrc}" alt="${book.title}">
+                        <h3>${book.title}</h3>
+                        <p>${book.authors ? book.authors.join(", ") : 'Unknown Author'}</p>
+                    </div>
+                `;
+                bookCard.addEventListener("click", function () {
+                    if (book.id) {
+                        window.location.href = `/book/${book.id}/`;
+                    } else {
+                        const queryParams = new URLSearchParams(book).toString();
+                        window.location.href = `/search-book/?${queryParams}`;
+                    }
+                });
+                searchBookGrid.appendChild(bookCard);
             });
             currentIndex += booksPerPage;
 

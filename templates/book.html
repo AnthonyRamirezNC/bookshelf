@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Book Details</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
   <style>
     :root {
       --bg:      #F9F3F0;
@@ -288,6 +290,7 @@
         overflow: hidden;
         transition: transform 0.2s ease;
         margin-bottom: 10px;
+        text-decoration: none;
     }
     .card img {
         width: 100%;
@@ -360,12 +363,39 @@ header img {
     <a href="/">
         <img src="/static/images/logo.svg" alt="Bookshelf Logo">
     </a>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="/#section-fiction">Fiction</a></li>
+            <li><a href="/#section-nonfiction">Non-Fiction</a></li>
+            <li><a href="/#section-classic">Classics</a></li>
+            <li><a href="/#section-scifi">Sci-Fi</a></li>
+            <li><a href="/#section-fantasy">Fantasy</a></li>
+            <li><a href="/#section-mystery">Mystery</a></li>
+            <li><a href="/#section-romance">Romance</a></li>
+            <li><a href="/#section-horror">Horror</a></li>
+            <li><a href="/#section-biography">Biography</a></li>
+            <li><a href="/#section-history">History</a></li>
+            <li><a href="/#section-child-lit">Youth</a></li>
+            <li><a href="/#section-thriller">Thriller</a></li>
+            <li><a href="/#section-health">Health</a></li>
+        </ul>
+            <div class="auth-links">
+                {% if user.is_authenticated %}
+                    <a href="/profile">Profile</a>
+                    <a href="/logout">Logout</a>
+                {% else %}
+                    <a href="/login/">Login</a>
+                    <a href="/register/">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 </header>
 <div class="container">
     <a href="javascript:history.back();" class="back-arrow" aria-label="Go Back">← Back</a>
     <div class="book-detail">
         <div class="book-cover-container">
-            <img id="book-cover" class="book-cover" src="/static/images/default-book.png" alt="Book Cover">
+            <img id="book-cover" class="book-cover" src="/static/images/image-loading.svg" alt="Book Cover">
         </div>
         <div class="book-info">
             <h1 id="book-title" class="book-title">Loading title…</h1>
@@ -382,7 +412,7 @@ header img {
         </div>
     </div>
 
-    <div id="review-form-section">
+    <div id="review-form-section" style="display: none;">
         <h3>Leave a Review</h3>
         <form id="review-form">
             <textarea name="review_text" id="review_text" rows="4" placeholder="Write your review here..." required></textarea>
@@ -406,7 +436,9 @@ header img {
     <div class="accordion">
         <details open>
             <summary>Reviews</summary>
-            <div id="review-grid" class="review-grid"></div>
+            <div id="review-grid" class="review-grid">
+              <p id="reviews-loading">Loading reviews…</p>
+            </div>
             <button id="load-more-reviews" class="load-more-btn" style="display: none;">Load More</button>
         </details>
     </div>
@@ -492,7 +524,10 @@ header img {
           return r.json();
         })
         .then(async (book) => {
-          coverEl.src         = book.img_src || coverEl.src;
+          coverEl.src = (!book.img_src || book.img_src === "Missing") 
+            ? "/static/images/image-not-available.svg" 
+            : book.img_src;
+
           titleEl.textContent = book.title  || "Unknown Title";
           authorEl.textContent= book.authors || "Unknown Author";
           descEl.textContent  = book.description || "No description.";
@@ -619,7 +654,6 @@ function showConfirmation(message, isError = false) {
           const data = await response.json();
           console.log('Review submitted:', data);
 
-          alert("Review submitted successfully!");
           location.reload();
         } catch (error) {
           console.error('Error submitting review:', error);
@@ -655,7 +689,7 @@ function showConfirmation(message, isError = false) {
       a.className = "card";
 
       a.innerHTML = `
-        <img src="${b.img_src || '/static/images/default-book.png'}" alt="${b.title}">
+        <img src="${(!b.img_src || b.img_src === 'Missing') ? '/static/images/image-not-available.svg' : b.img_src}" alt="${b.title}">
         <div class="card-content">
           <p class="card-title">${b.title}</p>
           <p class="card-authors">${b.authors || ""}</p>
@@ -749,10 +783,14 @@ function showConfirmation(message, isError = false) {
 
       if (!response.ok) {
         throw new Error('Failed to retrieve books reviews');
+        document.getElementById("review-grid").innerHTML = "<p>Could not load reviews.</p>";
       }
       
       const data = await response.json();
 
+
+      const loadingEl = document.getElementById("reviews-loading");
+      if (loadingEl) loadingEl.remove();
       renderReviews(data.reviews);
       console.log(currentUsername)
       

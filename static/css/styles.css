@@ -15,7 +15,7 @@ header img {
 }
 .book-section {
     margin: 20px;
-    padding: 20px;
+
 }
 .book-section h2 {
     color: #717744;
@@ -35,6 +35,7 @@ header img {
     padding: 10px;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
 }
 .book-card img {
     max-width: 100%;
@@ -45,6 +46,7 @@ header img {
     color: #5F758E;
     font-size: 16px;
     margin: 10px 0;
+    text-decoration: none;
 }
 .book-card p {
     color: #717744;
@@ -63,7 +65,7 @@ header img {
 }
 
 .load-more-btn {
-    display: block;
+    display: none;
     margin: 20px auto;
     padding: 10px 20px;
     font-size: 16px;
@@ -318,6 +320,10 @@ ul.errorlist {
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-card:focus {
+    outline: 2px solid #CE796B;
 }
 
 .book-card:hover {
